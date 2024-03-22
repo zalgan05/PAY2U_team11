@@ -3,7 +3,6 @@ from django.contrib import admin
 from subscriptions.models import (
     Subscription,
     Tariff,
-    SubscriptionOrder,
     SubscriptionUser
 )
 
@@ -41,4 +40,14 @@ class TariffnAdmin(admin.ModelAdmin):
         'duration',
         'price',
         'discount'
+    )
+
+
+@admin.register(SubscriptionUser)
+class SubscriptionUserAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'subscription',
+        'tariff',
+        'status'
     )

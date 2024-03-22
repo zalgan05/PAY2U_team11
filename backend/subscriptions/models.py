@@ -1,6 +1,7 @@
 import math
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 
 User = get_user_model()
@@ -82,21 +83,13 @@ class Tariff(models.Model):
         verbose_name = 'Тариф подписки'
         verbose_name_plural = 'Тарифы подписок'
 
-
-class SubscriptionOrder(models.Model):
-    subscription = models.ForeignKey(
-        Subscription,
-        on_delete=models.CASCADE,
-        related_name='subscription_order'
-    )
-    name_subscriber = models.CharField(max_length=MAX_LEGTH)
-    phone_number = models.IntegerField()
-    email = models.EmailField()
-    tariff = models.ForeignKey(
-        Tariff,
-        on_delete=models.CASCADE,
-        related_name='tariff_order'
-    )
+    def __str__(self):
+        if self.duration == 1:
+            return f'{self.duration} месяц сервиса {self.subscription.name}'
+        elif self.duration in [2, 3, 4]:
+            return f'{self.duration} месяца сервиса {self.subscription.name}'
+        else:
+            return f'{self.duration} месяцев сервиса {self.subscription.name}'
 
 
 class SubscriptionUser(models.Model):
@@ -107,9 +100,31 @@ class SubscriptionUser(models.Model):
         on_delete=models.CASCADE,
         related_name='orders'
     )
-    order = models.ForeignKey(
-        SubscriptionOrder,
+    subscription = models.ForeignKey(
+        Subscription,
         on_delete=models.CASCADE,
         related_name='orders'
     )
-    status = models.BooleanField(default=False)
+    name_subscriber = models.CharField(max_length=MAX_LEGTH)
+    phone_number = models.IntegerField()
+    email = models.EmailField()
+    tariff = models.ForeignKey(
+        Tariff,
+        on_delete=models.CASCADE,
+        related_name='orders'
+    )
+    status = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Заказ пользователя'
+        verbose_name_plural = 'Заказы пользователя'
+
+    def clean(self):
+        if self.subscription != self.tariff.subscription:
+            raise ValidationError(
+                'Выбранный тариф не принадлежит указанной подписке'
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
