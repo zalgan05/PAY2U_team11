@@ -1,6 +1,7 @@
 import math
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 
 User = get_user_model()
@@ -82,34 +83,76 @@ class Tariff(models.Model):
         verbose_name = 'Тариф подписки'
         verbose_name_plural = 'Тарифы подписок'
 
+    def __str__(self):
+        if self.duration == 1:
+            return f'{self.duration} месяц сервиса {self.subscription.name}'
+        elif self.duration in [2, 3, 4]:
+            return f'{self.duration} месяца сервиса {self.subscription.name}'
+        else:
+            return f'{self.duration} месяцев сервиса {self.subscription.name}'
 
-class SubscriptionOrder(models.Model):
+
+class UserSubscription(models.Model):
+    """Абстрактная модель связи подписка-пользователь."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
     subscription = models.ForeignKey(
         Subscription,
         on_delete=models.CASCADE,
-        related_name='subscription_order'
     )
+
+    class Meta:
+        abstract = True
+
+
+class SubscriptionUserOrder(UserSubscription):
+    """Модель связи заказа подписка-пользователь."""
+
     name_subscriber = models.CharField(max_length=MAX_LEGTH)
     phone_number = models.IntegerField()
     email = models.EmailField()
     tariff = models.ForeignKey(
         Tariff,
         on_delete=models.CASCADE,
-        related_name='tariff_order'
-    )
-
-
-class SubscriptionUser(models.Model):
-    """Модель связи подписка-пользователь."""
-
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
         related_name='orders'
     )
-    order = models.ForeignKey(
-        SubscriptionOrder,
-        on_delete=models.CASCADE,
-        related_name='orders'
-    )
-    status = models.BooleanField(default=False)
+    status = models.BooleanField(default=True)
+
+    class Meta:
+        default_related_name = 'orders'
+        verbose_name = 'Заказ пользователя'
+        verbose_name_plural = 'Заказы пользователя'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'subscription'],
+                name='unique_orders',
+            )
+        ]
+
+    def clean(self):
+        if self.subscription != self.tariff.subscription:
+            raise ValidationError(
+                'Выбранный тариф не принадлежит указанной подписке'
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+
+class IsFavoriteSubscription(UserSubscription):
+    """Создает связь пользователь-подписка избранное"""
+
+    class Meta:
+        default_related_name = 'is_favorite'
+        verbose_name = 'Подписка в избранном'
+        verbose_name_plural = 'Подписки в избранном'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'subscription'],
+                name='unique_isfavorite',
+            )
+        ]
