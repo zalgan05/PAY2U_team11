@@ -12,10 +12,10 @@ class Subscription(models.Model):
     """Модель сервиса подписки."""
 
     CHOICES_TYPE = (
-        ('film', 'Кино')
-        ('music', 'Музыка')
-        ('book', 'Книги')
-        ('other', 'Другое')
+        ('film', 'Кино'),
+        ('music', 'Музыка'),
+        ('book', 'Книги'),
+        ('other', 'Другое'),
     )
 
     name = models.CharField(max_length=MAX_LEGTH)
@@ -96,4 +96,4 @@ class SubscriptionUser(models.Model):
         on_delete=models.CASCADE,
         related_name='orders'
     )
-    status = models.BooleanField(defaul=False)
+    status = models.BooleanField(default=False)

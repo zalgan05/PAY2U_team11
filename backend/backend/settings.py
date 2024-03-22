@@ -6,8 +6,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-4a3#b1o&qv_4v*2dlz%78jvig@l3wv&s!0z@dg*7upit8%zsqv'
 
-
 DEBUG = True
+
+VERSION_API = '1'
 
 ALLOWED_HOSTS = []
 
@@ -21,7 +22,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'users',
-    'subscriptions'
+    'subscriptions',
+    'api'
 ]
 
 MIDDLEWARE = [
