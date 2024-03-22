@@ -3,7 +3,8 @@ from django.contrib import admin
 from subscriptions.models import (
     Subscription,
     Tariff,
-    SubscriptionUser
+    SubscriptionUserOrder,
+    IsFavoriteSubscription
 )
 
 
@@ -43,11 +44,16 @@ class TariffnAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(SubscriptionUser)
-class SubscriptionUserAdmin(admin.ModelAdmin):
+@admin.register(SubscriptionUserOrder)
+class SubscriptionUserOrderAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'subscription',
         'tariff',
         'status'
     )
+
+
+@admin.register(IsFavoriteSubscription)
+class IsFavoriteSubscriptionAdmin(admin.ModelAdmin):
+    pass

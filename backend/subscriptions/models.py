@@ -92,19 +92,25 @@ class Tariff(models.Model):
             return f'{self.duration} месяцев сервиса {self.subscription.name}'
 
 
-class SubscriptionUser(models.Model):
-    """Модель связи подписка-пользователь."""
+class UserSubscription(models.Model):
+    """Абстрактная модель связи подписка-пользователь."""
 
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='orders'
     )
     subscription = models.ForeignKey(
         Subscription,
         on_delete=models.CASCADE,
-        related_name='orders'
     )
+
+    class Meta:
+        abstract = True
+
+
+class SubscriptionUserOrder(UserSubscription):
+    """Модель связи заказа подписка-пользователь."""
+
     name_subscriber = models.CharField(max_length=MAX_LEGTH)
     phone_number = models.IntegerField()
     email = models.EmailField()
@@ -116,8 +122,15 @@ class SubscriptionUser(models.Model):
     status = models.BooleanField(default=True)
 
     class Meta:
+        default_related_name = 'orders'
         verbose_name = 'Заказ пользователя'
         verbose_name_plural = 'Заказы пользователя'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'subscription'],
+                name='unique_orders',
+            )
+        ]
 
     def clean(self):
         if self.subscription != self.tariff.subscription:
@@ -128,3 +141,18 @@ class SubscriptionUser(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
+
+
+class IsFavoriteSubscription(UserSubscription):
+    """Создает связь пользователь-подписка избранное"""
+
+    class Meta:
+        default_related_name = 'is_favorite'
+        verbose_name = 'Подписка в избранном'
+        verbose_name_plural = 'Подписки в избранном'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'subscription'],
+                name='unique_isfavorite',
+            )
+        ]
