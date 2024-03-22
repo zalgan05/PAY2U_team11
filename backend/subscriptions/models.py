@@ -20,7 +20,10 @@ class Subscription(models.Model):
 
     name = models.CharField(max_length=MAX_LEGTH)
     description = models.TextField()
-    type = models.CharField(choices=CHOICES_TYPE)
+    type = models.CharField(
+        max_length=MAX_LEGTH,
+        choices=CHOICES_TYPE
+    )
     cashback = models.IntegerField()
 
     class Meta:
@@ -42,6 +45,14 @@ class Tariff(models.Model):
     duration = models.IntegerField()
     price = models.IntegerField()
     discount = models.IntegerField()
+    price_per_month = models.IntegerField(
+        null=True,
+        blank=True
+    )
+    price_per_duration = models.IntegerField(
+        null=True,
+        blank=True
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -50,12 +61,22 @@ class Tariff(models.Model):
 
     def calculate_price_per_month(self):
         """Вычисляет стоимость подписки в месяц с учетом скидки."""
-        discount_rate = 1 - self.discount / 100
-        return math.floor(self.price * discount_rate * 10) / 10
+        if self.discount is not None:
+            discount_rate = 1 - self.discount / 100
+            return math.floor(self.price * discount_rate / 10 + 0.5) * 10
+        else:
+            return None
 
     def calculate_price_per_duration(self):
         """Вычисляет стоимость подписки за всю указанную длительность."""
-        return math.floor(self.price_per_month * self.duration * 10) / 10
+        if self.duration is not None:
+            return self.price_per_month * self.duration
+        return None
+
+    def save(self, *args, **kwargs):
+        self.price_per_month = self.calculate_price_per_month()
+        self.price_per_duration = self.calculate_price_per_duration()
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = 'Тариф подписки'
@@ -63,18 +84,13 @@ class Tariff(models.Model):
 
 
 class SubscriptionOrder(models.Model):
-    # user = models.ForeignKey(
-    #     User,
-    #     on_delete=models.CASCADE,
-    #     related_name='user_order'
-    # )
     subscription = models.ForeignKey(
         Subscription,
         on_delete=models.CASCADE,
         related_name='subscription_order'
     )
     name_subscriber = models.CharField(max_length=MAX_LEGTH)
-    phone_number = models.ImageField()
+    phone_number = models.IntegerField()
     email = models.EmailField()
     tariff = models.ForeignKey(
         Tariff,
