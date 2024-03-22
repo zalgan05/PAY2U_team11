@@ -21,6 +21,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'drf_spectacular',
+
     'users',
     'subscriptions',
     'api'
@@ -81,9 +83,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -98,3 +100,18 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Spectacular settings (API documentation)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Список эндпоинтов API',
+    'DESCRIPTION': (
+        'Документация API.'
+    ),
+    'VERSION': f'{VERSION_API}.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+}
