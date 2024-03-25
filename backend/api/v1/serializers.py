@@ -19,13 +19,30 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Subscription."""
 
     min_price = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
 
     class Meta:
         model = Subscription
-        fields = ['id', 'name', 'description', 'type', 'cashback', 'min_price']
+        fields = [
+            'id',
+            'name',
+            'description',
+            'type',
+            'cashback',
+            'min_price',
+            'is_favorited'
+        ]
 
     def get_min_price(self, obj) -> int:
+        """Возвращает минимальную цену подписки."""
         return obj.tariffs.first().price_per_month
+
+    def get_is_favorited(self, obj) -> bool:
+        """Проверяет, добавлен ли сервис в избранное для пользователя."""
+        user = self.context.get('request').user
+        if self.context.get('request').user.is_authenticated:
+            return obj.is_favorite.filter(user=user).exists()
+        return False
 
 
 class SubscriptionDetailSerializer(serializers.ModelSerializer):
@@ -38,13 +55,8 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'type', 'cashback', 'tariffs']
 
 
-class IsFavoriteSerializer(serializers.ModelSerializer):
+class IsFavoriteSerializer(serializers.Serializer):
     """Сериализатор для добавления и удаления подписки в избранное."""
-
-    class Meta:
-        model = Subscription
-        fields = ['id',]
-        read_only_fields = ['id',]
 
     def validate(self, attrs):
         """
@@ -55,6 +67,7 @@ class IsFavoriteSerializer(serializers.ModelSerializer):
         user = request.user
         sub_id = self.context.get('sub_id')
         subscription = get_object_or_404(Subscription, id=sub_id)
+
         if request.method == 'POST':
             if IsFavoriteSubscription.objects.filter(
                 user=user,
@@ -75,17 +88,16 @@ class IsFavoriteSerializer(serializers.ModelSerializer):
                 IsFavoriteSubscription.objects.filter(
                     user=user, subscription=subscription
                 ).delete()
-                return super().validate(attrs)
-        return super().validate(attrs)
+                return attrs
+        return attrs
 
-    def create(self, validated_data):
+    def save(self, **kwargs):
         """
         Создает связь пользователя с подпиской и добавляет ее в избранное.
         """
         sub_id = self.context.get('sub_id')
         subscription = get_object_or_404(Subscription, id=sub_id)
         IsFavoriteSubscription.objects.create(
-            user=User,
+            user=self.context['request'].user,
             subscription=subscription
         )
-        return subscription
