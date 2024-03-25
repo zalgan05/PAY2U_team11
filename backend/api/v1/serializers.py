@@ -1,8 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError, transaction
+# from django.core.exceptions import ValidationError
+
 from rest_framework import serializers
 
-from subscriptions.models import Subscription, Tariff, IsFavoriteSubscription
+from subscriptions.models import (
+    Subscription,
+    Tariff,
+    IsFavoriteSubscription,
+    SubscriptionUserOrder
+)
 
 User = get_user_model()
 
@@ -53,6 +61,60 @@ class SubscriptionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = ['id', 'name', 'description', 'type', 'cashback', 'tariffs']
+
+
+class SubscriptionOrderSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания заказа подписки."""
+
+    class Meta:
+        model = SubscriptionUserOrder
+        fields = ['name_subscriber', 'phone_number', 'email', 'tariff']
+
+    def create(self, validated_data):
+        try:
+            with transaction.atomic():
+                self.bank_operation(validated_data)
+                subscription_order = super().create(validated_data)
+
+        except IntegrityError:
+            raise serializers.ValidationError(
+                'У пользователя уже существует подписка на этот сервис.'
+            )
+        except Exception:
+            raise serializers.ValidationError(
+                'Ошибка при выполнении создании подписки. '
+                'Повторите попытку.'
+            )
+        return subscription_order
+
+    def bank_operation(self, validated_data):
+        """Симулирует банковскую операцию."""
+        user = self.context['request'].user
+        tariff_id = validated_data['tariff'].id
+        price = Tariff.objects.get(id=tariff_id).price_per_duration
+
+        if user.balance < price:
+            raise serializers.ValidationError('Недостаточно средств на счету.')
+
+        try:
+            with transaction.atomic():
+                user.balance -= price
+                user.save(update_fields=['balance'])
+
+        except Exception:
+            raise serializers.ValidationError(
+                'Ошибка при выполнении банковской операции. '
+                'Проверьте данные и повторите попытку.'
+            )
+
+    def validate_tariff(self, value):
+        """Валидирует выбранный тариф подписки."""
+        sub_id = self.context['sub_id']
+        if value.subscription.id != int(sub_id):
+            raise serializers.ValidationError(
+                'Выбранный тариф не принадлежит указанному сервису подписки.'
+            )
+        return value
 
 
 class IsFavoriteSerializer(serializers.Serializer):

@@ -11,7 +11,7 @@ class CaseInsensitiveStartsWithCharFilter(CharFilter):
                 Q(**{f'{self.field_name}__istartswith': value}) |
                 Q(**{f'{self.field_name}__istartswith': value.capitalize()})
             )
-        return qs.none()
+        return qs
 
 
 class SubscriptionFilter(FilterSet):

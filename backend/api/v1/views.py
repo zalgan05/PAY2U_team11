@@ -10,7 +10,8 @@ from subscriptions.models import (
 from .serializers import (
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
-    IsFavoriteSerializer
+    IsFavoriteSerializer,
+    SubscriptionOrderSerializer
 )
 from .filters import SubscriptionFilter
 
@@ -59,3 +60,32 @@ class SubscriptionViewSet(
         )
         serializer.is_valid(raise_exception=True)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        request={
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'name_subscriber': {'type': 'string'},
+                        'phone_number': {'type': 'integer'},
+                        'email': {'type': 'string', 'format': 'email'},
+                        'tariff': {'type': 'integer'},
+                    }
+                }
+            },
+        responses={201: SubscriptionOrderSerializer}
+    )
+    @action(detail=True, methods=['post',])
+    def order(self, request, pk):
+        """Создает заказ на подписку сервиса."""
+        serializer = SubscriptionOrderSerializer(
+            data=request.data,
+            context={'request': request, 'sub_id': pk}
+        )
+        serializer.is_valid(raise_exception=True)
+        subscription = Subscription.objects.get(id=pk)
+        serializer.save(
+            user=self.request.user,
+            subscription=subscription
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
