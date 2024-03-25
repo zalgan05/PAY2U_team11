@@ -31,10 +31,12 @@ class SubscriptionAdmin(admin.ModelAdmin):
 @admin.register(Tariff)
 class TariffnAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'subscription',
         'duration',
         'price',
-        'discount'
+        'discount',
+        'price_per_duration'
     )
     fields = (
         'subscription',

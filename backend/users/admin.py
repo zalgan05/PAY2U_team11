@@ -20,6 +20,7 @@ class CustomUserAdmin(UserAdmin):
             'middle_name',
             'last_name'
         )}),
+        (None, {'fields': ('balance',)})
     )
 
     add_fieldsets = (
