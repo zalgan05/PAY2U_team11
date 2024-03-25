@@ -56,4 +56,7 @@ class SubscriptionUserOrderAdmin(admin.ModelAdmin):
 
 @admin.register(IsFavoriteSubscription)
 class IsFavoriteSubscriptionAdmin(admin.ModelAdmin):
-    pass
+    list_display = (
+        'user',
+        'subscription',
+    )
