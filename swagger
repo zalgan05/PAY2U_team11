@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: Список эндпоинтов API
+  version: 1.0.0
+  description: Документация API.
+paths:
+  /api/v1/subs/:
+    get:
+      operationId: api_v1_subs_list
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/v1/subs/{id}/:
+    get:
+      operationId: api_v1_subs_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Сервис подписки.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionDetail'
+          description: ''
+components:
+  schemas:
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 64
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        cashback:
+          type: integer
+        min_price:
+          type: integer
+          readOnly: true
+      required:
+      - cashback
+      - description
+      - id
+      - min_price
+      - name
+      - type
+    SubscriptionDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 64
+        description:
+          type: string
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        cashback:
+          type: integer
+        tariffs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tariff'
+      required:
+      - cashback
+      - description
+      - id
+      - name
+      - tariffs
+      - type
+    Tariff:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        duration:
+          type: integer
+        discount:
+          type: integer
+        price_per_month:
+          type: integer
+          nullable: true
+        price_per_duration:
+          type: integer
+          nullable: true
+      required:
+      - discount
+      - duration
+      - id
+    TypeEnum:
+      enum:
+      - film
+      - music
+      - book
+      - other
+      type: string
+      description: |-
+        * `film` - Кино
+        * `music` - Музыка
+        * `book` - Книги
+        * `other` - Другое
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
