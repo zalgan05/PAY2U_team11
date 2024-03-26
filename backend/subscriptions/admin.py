@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from subscriptions.models import (
+    BannersSubscription,
     CategorySubscription,
     Subscription,
     Tariff,
@@ -19,9 +20,17 @@ class LinkInlines(admin.StackedInline):
     )
 
 
+class BannersInlines(admin.StackedInline):
+    model = BannersSubscription
+    extra = 1
+    fields = (
+        'image',
+    )
+
+
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    inlines = [LinkInlines,]
+    inlines = [LinkInlines, BannersInlines]
     list_display = (
         'name',
         'title',

@@ -9,12 +9,33 @@ User = get_user_model()
 MAX_LENGTH = 64
 
 
+def subscription_images_path(instance, filename):
+    """Возвращает путь для сохранения изображений проекта."""
+    if hasattr(instance, 'subscription'):
+        return f'subscriptions/{instance.subscription.name}/images/{filename}'
+    return f'subscriptions/{instance.name}/images/{filename}'
+
+
+class BannersSubscription(models.Model):
+    """Модель для хранения картинок баннера проекта."""
+
+    subscription = models.ForeignKey(
+        'Subscription',
+        on_delete=models.CASCADE,
+        related_name='banners'
+    )
+    image = models.ImageField(
+        upload_to=subscription_images_path
+    )
+
+
 class Subscription(models.Model):
     """Модель сервиса подписки."""
 
     name = models.CharField(max_length=MAX_LENGTH)
     title = models.CharField(max_length=MAX_LENGTH)
     description = models.TextField()
+    logo = models.ImageField(upload_to=subscription_images_path)
     categories = models.ManyToManyField(
         'CategorySubscription',
     )
@@ -31,7 +52,7 @@ class Subscription(models.Model):
 class CategorySubscription(models.Model):
     """Модель категории сервиса подписки."""
 
-    name = models.CharField(max_length=MAX_LENGTH)
+    name = models.CharField(max_length=MAX_LENGTH, unique=True)
     slug = models.SlugField(max_length=MAX_LENGTH, unique=True)
 
     class Meta:

@@ -18,7 +18,10 @@ from .serializers import (
 from .filters import SubscriptionFilter
 
 
-@extend_schema(tags=['Сервисы подписок'])
+@extend_schema(
+    tags=['Сервисы подписок'],
+    # responses=SubscriptionSerializer
+)
 class SubscriptionViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,

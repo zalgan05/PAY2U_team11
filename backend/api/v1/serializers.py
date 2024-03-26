@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from rest_framework import serializers
 
 from subscriptions.models import (
+    BannersSubscription,
     CategorySubscription,
     Subscription,
     Tariff,
@@ -16,10 +17,19 @@ User = get_user_model()
 
 
 class CategorySubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели категории сервиса подписки."""
 
     class Meta:
         model = CategorySubscription
         fields = '__all__'
+
+
+class BannersSubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор для картинок баннера сервиса подписки."""
+
+    class Meta:
+        model = BannersSubscription
+        fields = ['id', 'image']
 
 
 class TariffSerializer(serializers.ModelSerializer):
@@ -42,6 +52,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'logo',
             'description',
             'categories',
             'cashback',
@@ -65,11 +76,12 @@ class SubscriptionDetailSerializer(SubscriptionSerializer):
     """Сериализатор для детального представления модели Subscription."""
 
     tariffs = TariffSerializer(many=True)
+    banners = BannersSubscriptionSerializer(many=True)
 
     class Meta(SubscriptionSerializer.Meta):
         fields = list(SubscriptionSerializer.Meta.fields)
         fields.remove('min_price')
-        fields += ['tariffs', 'title']
+        fields += ['tariffs', 'title', 'banners']
 
 # class SubscriptionDetailSerializer(serializers.ModelSerializer):
 #     """Сериализатор для детального представления модели Subscription."""
