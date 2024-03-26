@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError, transaction
-# from django.core.exceptions import ValidationError
 
 from rest_framework import serializers
 
 from subscriptions.models import (
+    CategorySubscription,
     Subscription,
     Tariff,
     IsFavoriteSubscription,
@@ -13,6 +13,13 @@ from subscriptions.models import (
 )
 
 User = get_user_model()
+
+
+class CategorySubscriptionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = CategorySubscription
+        fields = '__all__'
 
 
 class TariffSerializer(serializers.ModelSerializer):
@@ -27,7 +34,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Subscription."""
 
     min_price = serializers.SerializerMethodField()
-    is_favorited = serializers.SerializerMethodField()
+    is_favorite = serializers.SerializerMethodField()
+    categories = CategorySubscriptionSerializer(many=True)
 
     class Meta:
         model = Subscription
@@ -35,17 +43,17 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'description',
-            'type',
+            'categories',
             'cashback',
             'min_price',
-            'is_favorited'
+            'is_favorite'
         ]
 
     def get_min_price(self, obj) -> int:
         """Возвращает минимальную цену подписки."""
         return obj.tariffs.first().price_per_month
 
-    def get_is_favorited(self, obj) -> bool:
+    def get_is_favorite(self, obj) -> bool:
         """Проверяет, добавлен ли сервис в избранное для пользователя."""
         user = self.context.get('request').user
         if self.context.get('request').user.is_authenticated:
@@ -53,14 +61,32 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return False
 
 
-class SubscriptionDetailSerializer(serializers.ModelSerializer):
+class SubscriptionDetailSerializer(SubscriptionSerializer):
     """Сериализатор для детального представления модели Subscription."""
 
     tariffs = TariffSerializer(many=True)
 
-    class Meta:
-        model = Subscription
-        fields = ['id', 'name', 'description', 'type', 'cashback', 'tariffs']
+    class Meta(SubscriptionSerializer.Meta):
+        fields = list(SubscriptionSerializer.Meta.fields)
+        fields.remove('min_price')
+        fields += ['tariffs']
+
+# class SubscriptionDetailSerializer(serializers.ModelSerializer):
+#     """Сериализатор для детального представления модели Subscription."""
+
+#     tariffs = TariffSerializer(many=True)
+#     category = CategorySubscriptionSerializer(many=True)
+
+#     class Meta:
+#         model = Subscription
+#         fields = [
+#             'id',
+#             'name',
+#             'description',
+#             'category',
+#             'cashback',
+#             'tariffs'
+#         ]
 
 
 class SubscriptionOrderSerializer(serializers.ModelSerializer):
@@ -68,7 +94,7 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubscriptionUserOrder
-        fields = ['name_subscriber', 'phone_number', 'email', 'tariff']
+        fields = ['name', 'phone_number', 'email', 'tariff']
 
     def create(self, validated_data):
         try:
@@ -91,7 +117,7 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
         """Симулирует банковскую операцию."""
         user = self.context['request'].user
         tariff_id = validated_data['tariff'].id
-        price = Tariff.objects.get(id=tariff_id).price_per_duration
+        price = Tariff.objects.get(id=tariff_id).price_per_period
 
         if user.balance < price:
             raise serializers.ValidationError('Недостаточно средств на счету.')

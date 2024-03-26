@@ -6,30 +6,36 @@ from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
-MAX_LEGTH = 64
+MAX_LENGTH = 64
 
 
 class Subscription(models.Model):
     """Модель сервиса подписки."""
 
-    CHOICES_TYPE = (
-        ('film', 'Кино'),
-        ('music', 'Музыка'),
-        ('book', 'Книги'),
-        ('other', 'Другое'),
-    )
-
-    name = models.CharField(max_length=MAX_LEGTH)
+    name = models.CharField(max_length=MAX_LENGTH)
     description = models.TextField()
-    type = models.CharField(
-        max_length=MAX_LEGTH,
-        choices=CHOICES_TYPE
+    categories = models.ManyToManyField(
+        'CategorySubscription',
     )
     cashback = models.IntegerField()
 
     class Meta:
         verbose_name = 'Сервис подписки'
         verbose_name_plural = 'Сервисы подписок'
+
+    def __str__(self):
+        return f'{self.name}'
+
+
+class CategorySubscription(models.Model):
+    """Модель категории сервиса подписки."""
+
+    name = models.CharField(max_length=MAX_LENGTH)
+    slug = models.SlugField(max_length=MAX_LENGTH, unique=True)
+
+    class Meta:
+        verbose_name = 'Категория сервиса'
+        verbose_name_plural = 'Категории сервисов'
 
     def __str__(self):
         return f'{self.name}'
@@ -43,14 +49,14 @@ class Tariff(models.Model):
         on_delete=models.CASCADE,
         related_name='tariffs'
     )
-    duration = models.IntegerField()
+    period = models.IntegerField()
     price = models.IntegerField()
     discount = models.IntegerField()
     price_per_month = models.IntegerField(
         null=True,
         blank=True
     )
-    price_per_duration = models.IntegerField(
+    price_per_period = models.IntegerField(
         null=True,
         blank=True
     )
@@ -58,7 +64,7 @@ class Tariff(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.price_per_month = self.calculate_price_per_month()
-        self.price_per_duration = self.calculate_price_per_duration()
+        self.price_per_period = self.calculate_price_per_period()
 
     def calculate_price_per_month(self):
         """Вычисляет стоимость подписки в месяц с учетом скидки."""
@@ -68,15 +74,15 @@ class Tariff(models.Model):
         else:
             return None
 
-    def calculate_price_per_duration(self):
+    def calculate_price_per_period(self):
         """Вычисляет стоимость подписки за всю указанную длительность."""
-        if self.duration is not None:
-            return self.price_per_month * self.duration
+        if self.period is not None:
+            return self.price_per_month * self.period
         return None
 
     def save(self, *args, **kwargs):
         self.price_per_month = self.calculate_price_per_month()
-        self.price_per_duration = self.calculate_price_per_duration()
+        self.price_per_period = self.calculate_price_per_period()
         super().save(*args, **kwargs)
 
     class Meta:
@@ -84,12 +90,12 @@ class Tariff(models.Model):
         verbose_name_plural = 'Тарифы подписок'
 
     def __str__(self):
-        if self.duration == 1:
-            return f'{self.duration} месяц сервиса {self.subscription.name}'
-        elif self.duration in [2, 3, 4]:
-            return f'{self.duration} месяца сервиса {self.subscription.name}'
+        if self.period == 1:
+            return f'{self.period} месяц сервиса {self.subscription.name}'
+        elif self.period in [2, 3, 4]:
+            return f'{self.period} месяца сервиса {self.subscription.name}'
         else:
-            return f'{self.duration} месяцев сервиса {self.subscription.name}'
+            return f'{self.period} месяцев сервиса {self.subscription.name}'
 
 
 class UserSubscription(models.Model):
@@ -111,7 +117,7 @@ class UserSubscription(models.Model):
 class SubscriptionUserOrder(UserSubscription):
     """Модель связи заказа подписка-пользователь."""
 
-    name_subscriber = models.CharField(max_length=MAX_LEGTH)
+    name = models.CharField(max_length=MAX_LENGTH)
     phone_number = models.IntegerField()
     email = models.EmailField()
     tariff = models.ForeignKey(

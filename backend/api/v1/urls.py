@@ -6,11 +6,16 @@ from drf_spectacular.views import (
     SpectacularRedocView
 )
 
-from .views import SubscriptionViewSet
+from .views import CategorySubscriptionViewSet, SubscriptionViewSet
 
 
 router = DefaultRouter()
-router.register('subs', SubscriptionViewSet, basename='subscription')
+router.register('subscriptions', SubscriptionViewSet, basename='subscription')
+router.register(
+    'categories',
+    CategorySubscriptionViewSet,
+    basename='categories'
+)
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from subscriptions.models import (
+    CategorySubscription,
     Subscription,
     Tariff,
     SubscriptionUserOrder,
@@ -12,7 +13,7 @@ class LinkInlines(admin.StackedInline):
     model = Tariff
     extra = 1
     fields = (
-        'duration',
+        'period',
         'price',
         'discount'
     )
@@ -24,8 +25,12 @@ class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'description',
-        'type',
+        'categories_list',
     )
+
+    @admin.display(description='Категории')
+    def categories_list(self, row):
+        return ','.join([x.name for x in row.categories.all()])
 
 
 @admin.register(Tariff)
@@ -33,14 +38,14 @@ class TariffnAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'subscription',
-        'duration',
+        'period',
         'price',
         'discount',
-        'price_per_duration'
+        'price_per_period'
     )
     fields = (
         'subscription',
-        'duration',
+        'period',
         'price',
         'discount'
     )
@@ -61,4 +66,12 @@ class IsFavoriteSubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'subscription',
+    )
+
+
+@admin.register(CategorySubscription)
+class CategorySubscriptionAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'slug',
     )

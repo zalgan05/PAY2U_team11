@@ -5,9 +5,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (extend_schema,)
 
 from subscriptions.models import (
+    CategorySubscription,
     Subscription,
 )
 from .serializers import (
+    CategorySubscriptionSerializer,
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
@@ -22,6 +24,8 @@ class SubscriptionViewSet(
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet
 ):
+    """Позволяет просматривать список доступных подписок."""
+
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filter_backends = (DjangoFilterBackend,)
@@ -89,3 +93,14 @@ class SubscriptionViewSet(
             subscription=subscription
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=['Категории сервисов'])
+class CategorySubscriptionViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    """Возвращает список доступных категорий сервисов."""
+
+    queryset = CategorySubscription.objects.all()
+    serializer_class = CategorySubscriptionSerializer
