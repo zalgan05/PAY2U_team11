@@ -13,6 +13,7 @@ class Subscription(models.Model):
     """Модель сервиса подписки."""
 
     name = models.CharField(max_length=MAX_LENGTH)
+    title = models.CharField(max_length=MAX_LENGTH)
     description = models.TextField()
     categories = models.ManyToManyField(
         'CategorySubscription',
@@ -44,12 +45,19 @@ class CategorySubscription(models.Model):
 class Tariff(models.Model):
     """Модель тарифа сервиса подписки."""
 
+    PERIOD_CHOICES = [
+        (1, 1),
+        (3, 3),
+        (6, 6),
+        (12, 12),
+    ]
+
     subscription = models.ForeignKey(
         Subscription,
         on_delete=models.CASCADE,
         related_name='tariffs'
     )
-    period = models.IntegerField()
+    period = models.IntegerField(choices=PERIOD_CHOICES)
     price = models.IntegerField()
     discount = models.IntegerField()
     price_per_month = models.IntegerField(
@@ -60,11 +68,28 @@ class Tariff(models.Model):
         null=True,
         blank=True
     )
+    slug = models.SlugField(
+        max_length=MAX_LENGTH,
+        unique=True,
+        null=True,
+        blank=True
+    )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.price_per_month = self.calculate_price_per_month()
-        self.price_per_period = self.calculate_price_per_period()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.price_per_month = self.calculate_price_per_month()
+    #     self.price_per_period = self.calculate_price_per_period()
+    #     self.slug = self.get_slug()
+
+    def get_slug(self):
+        """Возвращает слаг в зависимости от выбранного периода."""
+        period_slug_mapping = {
+            1: 'monthly',
+            3: 'quarterly',
+            6: 'semiannually',
+            12: 'annually',
+        }
+        return period_slug_mapping.get(self.period)
 
     def calculate_price_per_month(self):
         """Вычисляет стоимость подписки в месяц с учетом скидки."""
@@ -83,6 +108,7 @@ class Tariff(models.Model):
     def save(self, *args, **kwargs):
         self.price_per_month = self.calculate_price_per_month()
         self.price_per_period = self.calculate_price_per_period()
+        self.slug = self.get_slug()
         super().save(*args, **kwargs)
 
     class Meta:

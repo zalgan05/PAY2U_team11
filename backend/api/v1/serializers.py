@@ -69,7 +69,7 @@ class SubscriptionDetailSerializer(SubscriptionSerializer):
     class Meta(SubscriptionSerializer.Meta):
         fields = list(SubscriptionSerializer.Meta.fields)
         fields.remove('min_price')
-        fields += ['tariffs']
+        fields += ['tariffs', 'title']
 
 # class SubscriptionDetailSerializer(serializers.ModelSerializer):
 #     """Сериализатор для детального представления модели Subscription."""

@@ -24,6 +24,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     inlines = [LinkInlines,]
     list_display = (
         'name',
+        'title',
         'description',
         'categories_list',
     )
@@ -41,7 +42,8 @@ class TariffnAdmin(admin.ModelAdmin):
         'period',
         'price',
         'discount',
-        'price_per_period'
+        'price_per_period',
+        'slug'
     )
     fields = (
         'subscription',
