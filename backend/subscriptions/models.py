@@ -6,24 +6,38 @@ from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
-MAX_LEGTH = 64
+MAX_LENGTH = 64
+
+
+def subscription_images_path(instance, filename):
+    """Возвращает путь для сохранения изображений проекта."""
+    if hasattr(instance, 'subscription'):
+        return f'subscriptions/{instance.subscription.name}/images/{filename}'
+    return f'subscriptions/{instance.name}/images/{filename}'
+
+
+class BannersSubscription(models.Model):
+    """Модель для хранения картинок баннера проекта."""
+
+    subscription = models.ForeignKey(
+        'Subscription',
+        on_delete=models.CASCADE,
+        related_name='banners'
+    )
+    image = models.ImageField(
+        upload_to=subscription_images_path
+    )
 
 
 class Subscription(models.Model):
     """Модель сервиса подписки."""
 
-    CHOICES_TYPE = (
-        ('film', 'Кино'),
-        ('music', 'Музыка'),
-        ('book', 'Книги'),
-        ('other', 'Другое'),
-    )
-
-    name = models.CharField(max_length=MAX_LEGTH)
+    name = models.CharField(max_length=MAX_LENGTH)
+    title = models.CharField(max_length=MAX_LENGTH)
     description = models.TextField()
-    type = models.CharField(
-        max_length=MAX_LEGTH,
-        choices=CHOICES_TYPE
+    logo = models.ImageField(upload_to=subscription_images_path)
+    categories = models.ManyToManyField(
+        'CategorySubscription',
     )
     cashback = models.IntegerField()
 
@@ -35,30 +49,68 @@ class Subscription(models.Model):
         return f'{self.name}'
 
 
+class CategorySubscription(models.Model):
+    """Модель категории сервиса подписки."""
+
+    name = models.CharField(max_length=MAX_LENGTH, unique=True)
+    slug = models.SlugField(max_length=MAX_LENGTH, unique=True)
+
+    class Meta:
+        verbose_name = 'Категория сервиса'
+        verbose_name_plural = 'Категории сервисов'
+
+    def __str__(self):
+        return f'{self.name}'
+
+
 class Tariff(models.Model):
     """Модель тарифа сервиса подписки."""
+
+    PERIOD_CHOICES = [
+        (1, 1),
+        (3, 3),
+        (6, 6),
+        (12, 12),
+    ]
 
     subscription = models.ForeignKey(
         Subscription,
         on_delete=models.CASCADE,
         related_name='tariffs'
     )
-    duration = models.IntegerField()
+    period = models.IntegerField(choices=PERIOD_CHOICES)
     price = models.IntegerField()
     discount = models.IntegerField()
     price_per_month = models.IntegerField(
         null=True,
         blank=True
     )
-    price_per_duration = models.IntegerField(
+    price_per_period = models.IntegerField(
+        null=True,
+        blank=True
+    )
+    slug = models.SlugField(
+        max_length=MAX_LENGTH,
+        unique=True,
         null=True,
         blank=True
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.price_per_month = self.calculate_price_per_month()
-        self.price_per_duration = self.calculate_price_per_duration()
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     self.price_per_month = self.calculate_price_per_month()
+    #     self.price_per_period = self.calculate_price_per_period()
+    #     self.slug = self.get_slug()
+
+    def get_slug(self):
+        """Возвращает слаг в зависимости от выбранного периода."""
+        period_slug_mapping = {
+            1: 'monthly',
+            3: 'quarterly',
+            6: 'semiannually',
+            12: 'annually',
+        }
+        return period_slug_mapping.get(self.period)
 
     def calculate_price_per_month(self):
         """Вычисляет стоимость подписки в месяц с учетом скидки."""
@@ -68,15 +120,16 @@ class Tariff(models.Model):
         else:
             return None
 
-    def calculate_price_per_duration(self):
+    def calculate_price_per_period(self):
         """Вычисляет стоимость подписки за всю указанную длительность."""
-        if self.duration is not None:
-            return self.price_per_month * self.duration
+        if self.period is not None:
+            return self.price_per_month * self.period
         return None
 
     def save(self, *args, **kwargs):
         self.price_per_month = self.calculate_price_per_month()
-        self.price_per_duration = self.calculate_price_per_duration()
+        self.price_per_period = self.calculate_price_per_period()
+        self.slug = self.get_slug()
         super().save(*args, **kwargs)
 
     class Meta:
@@ -84,12 +137,12 @@ class Tariff(models.Model):
         verbose_name_plural = 'Тарифы подписок'
 
     def __str__(self):
-        if self.duration == 1:
-            return f'{self.duration} месяц сервиса {self.subscription.name}'
-        elif self.duration in [2, 3, 4]:
-            return f'{self.duration} месяца сервиса {self.subscription.name}'
+        if self.period == 1:
+            return f'{self.period} месяц сервиса {self.subscription.name}'
+        elif self.period in [2, 3, 4]:
+            return f'{self.period} месяца сервиса {self.subscription.name}'
         else:
-            return f'{self.duration} месяцев сервиса {self.subscription.name}'
+            return f'{self.period} месяцев сервиса {self.subscription.name}'
 
 
 class UserSubscription(models.Model):
@@ -111,7 +164,7 @@ class UserSubscription(models.Model):
 class SubscriptionUserOrder(UserSubscription):
     """Модель связи заказа подписка-пользователь."""
 
-    name_subscriber = models.CharField(max_length=MAX_LEGTH)
+    name = models.CharField(max_length=MAX_LENGTH)
     phone_number = models.IntegerField()
     email = models.EmailField()
     tariff = models.ForeignKey(

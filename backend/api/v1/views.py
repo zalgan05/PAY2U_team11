@@ -2,12 +2,14 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import (extend_schema,)
+from drf_spectacular.utils import (extend_schema, extend_schema_view)
 
 from subscriptions.models import (
+    CategorySubscription,
     Subscription,
 )
 from .serializers import (
+    CategorySubscriptionSerializer,
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
@@ -17,11 +19,21 @@ from .filters import SubscriptionFilter
 
 
 @extend_schema(tags=['Сервисы подписок'])
+@extend_schema_view(
+    list=extend_schema(
+        summary='Получить список всех сервисов',
+    ),
+    retrieve=extend_schema(
+        summary='Получить детальную информацию одного сервиса',
+    )
+)
 class SubscriptionViewSet(
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
     viewsets.GenericViewSet
 ):
+    """Позволяет просматривать список доступных подписок."""
+
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filter_backends = (DjangoFilterBackend,)
@@ -35,6 +47,7 @@ class SubscriptionViewSet(
     @extend_schema(
         request=None,
         responses={status.HTTP_201_CREATED: None},
+        summary='Добавить сервис в избранное'
     )
     @action(detail=True, methods=['post'])
     def favorite(self, request, pk):
@@ -50,6 +63,7 @@ class SubscriptionViewSet(
     @extend_schema(
         request=None,
         responses={status.HTTP_204_NO_CONTENT: None},
+        summary='Удалить сервис из избранного'
     )
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
@@ -66,14 +80,15 @@ class SubscriptionViewSet(
                 'items': {
                     'type': 'object',
                     'properties': {
-                        'name_subscriber': {'type': 'string'},
+                        'name': {'type': 'string'},
                         'phone_number': {'type': 'integer'},
                         'email': {'type': 'string', 'format': 'email'},
                         'tariff': {'type': 'integer'},
                     }
                 }
             },
-        responses={201: SubscriptionOrderSerializer}
+        responses={201: SubscriptionOrderSerializer},
+        summary='Оформить подписку'
     )
     @action(detail=True, methods=['post',])
     def order(self, request, pk):
@@ -89,3 +104,14 @@ class SubscriptionViewSet(
             subscription=subscription
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=['Категории сервисов'], summary='Список всех категорий')
+class CategorySubscriptionViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    """Возвращает список доступных категорий сервисов."""
+
+    queryset = CategorySubscription.objects.all()
+    serializer_class = CategorySubscriptionSerializer
