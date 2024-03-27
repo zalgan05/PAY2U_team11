@@ -2,7 +2,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import (extend_schema,)
+from drf_spectacular.utils import (extend_schema, extend_schema_view)
 
 from subscriptions.models import (
     CategorySubscription,
@@ -18,9 +18,14 @@ from .serializers import (
 from .filters import SubscriptionFilter
 
 
-@extend_schema(
-    tags=['Сервисы подписок'],
-    # responses=SubscriptionSerializer
+@extend_schema(tags=['Сервисы подписок'])
+@extend_schema_view(
+    list=extend_schema(
+        summary='Получить список всех сервисов',
+    ),
+    retrieve=extend_schema(
+        summary='Получить детальную информацию одного сервиса',
+    )
 )
 class SubscriptionViewSet(
     mixins.ListModelMixin,
@@ -42,6 +47,7 @@ class SubscriptionViewSet(
     @extend_schema(
         request=None,
         responses={status.HTTP_201_CREATED: None},
+        summary='Добавить сервис в избранное'
     )
     @action(detail=True, methods=['post'])
     def favorite(self, request, pk):
@@ -57,6 +63,7 @@ class SubscriptionViewSet(
     @extend_schema(
         request=None,
         responses={status.HTTP_204_NO_CONTENT: None},
+        summary='Удалить сервис из избранного'
     )
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
@@ -80,7 +87,8 @@ class SubscriptionViewSet(
                     }
                 }
             },
-        responses={201: SubscriptionOrderSerializer}
+        responses={201: SubscriptionOrderSerializer},
+        summary='Оформить подписку'
     )
     @action(detail=True, methods=['post',])
     def order(self, request, pk):
@@ -98,7 +106,7 @@ class SubscriptionViewSet(
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(tags=['Категории сервисов'])
+@extend_schema(tags=['Категории сервисов'], summary='Список всех категорий')
 class CategorySubscriptionViewSet(
     mixins.ListModelMixin,
     viewsets.GenericViewSet
