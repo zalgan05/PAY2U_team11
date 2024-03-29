@@ -2,7 +2,11 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import (extend_schema, extend_schema_view)
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter
+)
 
 from subscriptions.models import (
     CategorySubscription,
@@ -10,12 +14,15 @@ from subscriptions.models import (
 )
 from .serializers import (
     CategorySubscriptionSerializer,
+    MySubscriptionSerializer,
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
     SubscriptionOrderSerializer
 )
-from .filters import SubscriptionFilter
+from .filters import (
+    SubscriptionFilter,
+)
 
 
 @extend_schema(tags=['Сервисы подписок'])
@@ -104,6 +111,52 @@ class SubscriptionViewSet(
             subscription=subscription
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary='Получить мои подписки',
+        responses={200: MySubscriptionSerializer(many=True)},
+        parameters=[
+            OpenApiParameter(
+                location=OpenApiParameter.QUERY,
+                name='pay_status',
+                required=False,
+                type=bool
+            ),
+        ]
+    )
+    @action(detail=False, methods=['get'], filterset_class=None)
+    def my(self, request, *args, **kwargs):
+        """
+        Получает подписки текущего пользователя.
+
+        Parameters:
+        - pay_status (bool, optional): Фильтр по статусу оплаты подписок.
+            Позволяет фильтровать подписки по статусу оплаты.
+            Если передано значение True, возвращаются подписки
+            со статусом оплаты "оплачено".
+            Если передано значение False, возвращаются подписки
+            со статусом оплаты "не оплачено".
+        """
+        pay_status = self.request.query_params.get('pay_status', '').lower()
+
+        user = request.user
+        subscriptions = Subscription.objects.filter(orders__user=user)
+
+        if pay_status == 'true':
+            subscriptions = subscriptions.filter(orders__pay_status=True)
+        elif pay_status == 'false':
+            subscriptions = subscriptions.filter(orders__pay_status=False)
+
+        serializer = MySubscriptionSerializer(subscriptions, many=True)
+        return Response(serializer.data)
+
+    # def dispatch(self, request, *args, **kwargs):
+    #     res = super().dispatch(request, *args, **kwargs)
+    #     from django.db import connection
+    #     print(len(connection.queries))
+    #     for q in connection.queries:
+    #         print('>>>>>>', q['sql'])
+    #     return res
 
 
 @extend_schema(tags=['Категории сервисов'], summary='Список всех категорий')

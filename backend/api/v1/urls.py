@@ -6,7 +6,10 @@ from drf_spectacular.views import (
     SpectacularRedocView
 )
 
-from .views import CategorySubscriptionViewSet, SubscriptionViewSet
+from .views import (
+    CategorySubscriptionViewSet,
+    SubscriptionViewSet
+)
 
 
 router = DefaultRouter()

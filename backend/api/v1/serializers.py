@@ -1,8 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError, transaction
-
 from rest_framework import serializers
+
+from drf_spectacular.utils import (
+    # extend_schema,
+    extend_schema_field,
+    # extend_schema_view,
+)
 
 from subscriptions.models import (
     BannersSubscription,
@@ -201,3 +206,33 @@ class IsFavoriteSerializer(serializers.Serializer):
             user=self.context['request'].user,
             subscription=subscription
         )
+
+
+class MySubscriptionSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для модели Subscription для использования в представлении my
+    для отображения подписок пользователя.
+    Включает информацию о тарифе и статусе оплаты.
+    """
+
+    tariff = serializers.SerializerMethodField()
+    pay_status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = (
+            'id',
+            'name',
+            'logo',
+            'cashback',
+            'tariff',
+            'pay_status'
+        )
+
+    @extend_schema_field(field=TariffSerializer())
+    def get_tariff(self, obj) -> dict:
+        tariff = obj.orders.select_related('tariff').get().tariff
+        return TariffSerializer(tariff).data
+
+    def get_pay_status(self, obj) -> bool:
+        return obj.orders.get().pay_status
