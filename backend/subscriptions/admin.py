@@ -44,7 +44,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Tariff)
-class TariffnAdmin(admin.ModelAdmin):
+class TariffAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'subscription',
@@ -65,10 +65,11 @@ class TariffnAdmin(admin.ModelAdmin):
 @admin.register(SubscriptionUserOrder)
 class SubscriptionUserOrderAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'user',
         'subscription',
         'tariff',
-        'status'
+        'pay_status'
     )
 
 

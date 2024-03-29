@@ -201,3 +201,27 @@ class IsFavoriteSerializer(serializers.Serializer):
             user=self.context['request'].user,
             subscription=subscription
         )
+
+
+class MySubscriptionSerializer(serializers.ModelSerializer):
+
+    tariff = serializers.SerializerMethodField()
+    pay_status = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Subscription
+        fields = (
+            'id',
+            'name',
+            'logo',
+            'cashback',
+            'tariff',
+            'pay_status'
+        )
+
+    def get_tariff(self, obj):
+        tariff = obj.orders.select_related('tariff').get().tariff
+        return TariffSerializer(tariff).data
+
+    def get_pay_status(self, obj):
+        return obj.orders.get().pay_status

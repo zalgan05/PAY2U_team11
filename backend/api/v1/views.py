@@ -2,7 +2,10 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import (extend_schema, extend_schema_view)
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+)
 
 from subscriptions.models import (
     CategorySubscription,
@@ -10,6 +13,7 @@ from subscriptions.models import (
 )
 from .serializers import (
     CategorySubscriptionSerializer,
+    MySubscriptionSerializer,
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
@@ -104,6 +108,21 @@ class SubscriptionViewSet(
             subscription=subscription
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'])
+    def my(self, request, *args, **kwargs):
+        user = request.user
+        subscriptions = Subscription.objects.filter(orders__user=user)
+        serializer = MySubscriptionSerializer(subscriptions, many=True)
+        return Response(serializer.data)
+
+    def dispatch(self, request, *args, **kwargs):
+        res = super().dispatch(request, *args, **kwargs)
+        from django.db import connection
+        print(len(connection.queries))
+        for q in connection.queries:
+            print('>>>>>>', q['sql'])
+        return res
 
 
 @extend_schema(tags=['Категории сервисов'], summary='Список всех категорий')

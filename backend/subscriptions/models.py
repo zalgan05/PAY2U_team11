@@ -172,7 +172,7 @@ class SubscriptionUserOrder(UserSubscription):
         on_delete=models.CASCADE,
         related_name='orders'
     )
-    status = models.BooleanField(default=True)
+    pay_status = models.BooleanField(default=True)
 
     class Meta:
         default_related_name = 'orders'
