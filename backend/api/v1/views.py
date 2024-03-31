@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Min
+# from django.utils import timezone
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -26,6 +27,7 @@ from .serializers import (
 from .filters import (
     SubscriptionFilter,
 )
+from .tasks import next_bank_transaction
 
 
 @extend_schema(tags=['Сервисы подписок'])
@@ -165,10 +167,13 @@ class SubscriptionViewSet(
         )
         serializer.is_valid(raise_exception=True)
         subscription = Subscription.objects.get(id=pk)
-        serializer.save(
+        order = serializer.save(
             user=self.request.user,
             subscription=subscription
         )
+        # next_bank_transaction.apply_async(
+        #     args=[order.id], eta=order.due_time
+        # )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(

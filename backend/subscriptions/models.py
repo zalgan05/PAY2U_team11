@@ -171,6 +171,7 @@ class SubscriptionUserOrder(UserSubscription):
         on_delete=models.CASCADE,
         related_name='orders'
     )
+    due_date = models.DateTimeField(blank=True, null=True)
     pay_status = models.BooleanField(default=True)
 
     class Meta:
