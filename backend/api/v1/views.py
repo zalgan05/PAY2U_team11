@@ -1,7 +1,8 @@
-from rest_framework import viewsets, mixins, status
+from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Min
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -31,6 +32,16 @@ from .filters import (
 @extend_schema_view(
     list=extend_schema(
         summary='Получить список всех сервисов',
+        parameters=[
+            OpenApiParameter(
+                location=OpenApiParameter.QUERY,
+                name='ordering',
+                required=False,
+                description='Поля для сортировки',
+                type=str,
+                enum=['name', 'popular_rate']
+            ),
+        ]
     ),
     retrieve=extend_schema(
         summary='Получить детальную информацию одного сервиса',
@@ -43,15 +54,27 @@ class SubscriptionViewSet(
 ):
     """Позволяет просматривать список доступных подписок."""
 
-    queryset = Subscription.objects.all()
+    queryset = Subscription.objects.annotate(
+        min_price=Min('tariffs__price_per_month')
+    ).prefetch_related('categories',)
     serializer_class = SubscriptionSerializer
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = SubscriptionFilter
+    ordering_fields = ('name', 'popular_rate')
+    ordering = ('-name',)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return SubscriptionDetailSerializer
         return super().get_serializer_class()
+
+    def get_queryset(self):
+        if self.action == 'retrieve':
+            return Subscription.objects.prefetch_related(
+                'categories',
+                'banners',
+            )
+        return super().get_queryset()
 
     @extend_schema(
         responses={status.HTTP_200_OK: TariffSerializer(many=True)},
@@ -158,8 +181,8 @@ class SubscriptionViewSet(
                 name='pay_status',
                 required=False,
                 type=bool
-            ),
-        ]
+            )
+        ],
     )
     @action(detail=False, methods=['get'], filterset_class=None)
     def my(self, request, *args, **kwargs):
@@ -187,13 +210,13 @@ class SubscriptionViewSet(
         serializer = MySubscriptionSerializer(subscriptions, many=True)
         return Response(serializer.data)
 
-    def dispatch(self, request, *args, **kwargs):
-        res = super().dispatch(request, *args, **kwargs)
-        from django.db import connection
-        print(len(connection.queries))
-        for q in connection.queries:
-            print('>>>>>>', q['sql'])
-        return res
+    # def dispatch(self, request, *args, **kwargs):
+    #     res = super().dispatch(request, *args, **kwargs)
+    #     from django.db import connection
+    #     print(len(connection.queries))
+    #     for q in connection.queries:
+    #         print('>>>>>>', q['sql'])
+    #     return res
 
 
 @extend_schema(tags=['Категории сервисов'], summary='Список всех категорий')

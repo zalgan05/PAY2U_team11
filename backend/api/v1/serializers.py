@@ -48,7 +48,8 @@ class TariffSerializer(serializers.ModelSerializer):
 class SubscriptionSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Subscription."""
 
-    min_price = serializers.SerializerMethodField()
+    # min_price = serializers.SerializerMethodField()
+    min_price = serializers.IntegerField()
     is_favorite = serializers.SerializerMethodField()
     categories = CategorySubscriptionSerializer(many=True)
 
@@ -61,13 +62,14 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             'description',
             'categories',
             'cashback',
+            'popular_rate',
             'min_price',
             'is_favorite'
         ]
 
-    def get_min_price(self, obj) -> int:
-        """Возвращает минимальную цену подписки."""
-        return obj.tariffs.first().price_per_month
+    # def get_min_price(self, obj) -> int:
+    #     """Возвращает минимальную цену подписки."""
+    #     return obj.tariffs.first().price_per_month
 
     def get_is_favorite(self, obj) -> bool:
         """Проверяет, добавлен ли сервис в избранное для пользователя."""
