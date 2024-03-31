@@ -2,11 +2,13 @@ import math
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator
 
 
 User = get_user_model()
 
 MAX_LENGTH = 64
+MAX_VALUE_POPULAR = 100
 
 
 def subscription_images_path(instance, filename):
@@ -39,7 +41,10 @@ class Subscription(models.Model):
     categories = models.ManyToManyField(
         'CategorySubscription',
     )
-    cashback = models.IntegerField()
+    cashback = models.PositiveIntegerField()
+    popular_rate = models.PositiveIntegerField(
+        validators=[MaxValueValidator(MAX_VALUE_POPULAR),]
+    )
 
     class Meta:
         verbose_name = 'Сервис подписки'
@@ -79,13 +84,13 @@ class Tariff(models.Model):
         related_name='tariffs'
     )
     period = models.IntegerField(choices=PERIOD_CHOICES)
-    price = models.IntegerField()
-    discount = models.IntegerField()
-    price_per_month = models.IntegerField(
+    price = models.PositiveIntegerField()
+    discount = models.PositiveIntegerField()
+    price_per_month = models.PositiveIntegerField(
         null=True,
         blank=True
     )
-    price_per_period = models.IntegerField(
+    price_per_period = models.PositiveIntegerField(
         null=True,
         blank=True
     )
@@ -95,12 +100,6 @@ class Tariff(models.Model):
         null=True,
         blank=True
     )
-
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     self.price_per_month = self.calculate_price_per_month()
-    #     self.price_per_period = self.calculate_price_per_period()
-    #     self.slug = self.get_slug()
 
     def get_slug(self):
         """Возвращает слаг в зависимости от выбранного периода."""
@@ -165,7 +164,7 @@ class SubscriptionUserOrder(UserSubscription):
     """Модель связи заказа подписка-пользователь."""
 
     name = models.CharField(max_length=MAX_LENGTH)
-    phone_number = models.IntegerField()
+    phone_number = models.CharField(max_length=12, unique=True)
     email = models.EmailField()
     tariff = models.ForeignKey(
         Tariff,
