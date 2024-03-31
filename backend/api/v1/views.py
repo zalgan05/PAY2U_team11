@@ -11,6 +11,7 @@ from drf_spectacular.utils import (
 from subscriptions.models import (
     CategorySubscription,
     Subscription,
+    Tariff,
 )
 from .serializers import (
     CategorySubscriptionSerializer,
@@ -18,7 +19,8 @@ from .serializers import (
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
-    SubscriptionOrderSerializer
+    SubscriptionOrderSerializer,
+    TariffSerializer
 )
 from .filters import (
     SubscriptionFilter,
@@ -50,6 +52,40 @@ class SubscriptionViewSet(
         if self.action == 'retrieve':
             return SubscriptionDetailSerializer
         return super().get_serializer_class()
+
+    @extend_schema(
+        responses={status.HTTP_200_OK: TariffSerializer(many=True)},
+        summary='Получить все тарифы подписки'
+    )
+    @action(detail=True, methods=['get'], filterset_class=None)
+    def tariffs(self, request, pk):
+        """Получить все тарифы сервиса подписок."""
+        tariffs = Tariff.objects.filter(subscription=pk)
+        serializer = TariffSerializer(tariffs, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        tags=['Мои подписки'],
+        responses={
+            status.HTTP_200_OK: TariffSerializer,
+            status.HTTP_404_NOT_FOUND: {'error': 'Тариф не найден'}
+        },
+        summary='Получить мой тариф подписки'
+    )
+    @action(detail=True, methods=['get'])
+    def mytariff(self, request, pk):
+        """Получить мой тариф подписки на сервис."""
+        user = request.user
+        try:
+            subscription = Subscription.objects.get(orders__user=user, id=pk)
+            tariff = subscription.orders.select_related('tariff').get().tariff
+            serializer = TariffSerializer(tariff)
+            return Response(serializer.data)
+        except Exception:
+            return Response(
+                {'error': 'Тариф не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
     @extend_schema(
         request=None,
@@ -113,6 +149,7 @@ class SubscriptionViewSet(
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
+        tags=['Мои подписки'],
         summary='Получить мои подписки',
         responses={200: MySubscriptionSerializer(many=True)},
         parameters=[
@@ -150,13 +187,13 @@ class SubscriptionViewSet(
         serializer = MySubscriptionSerializer(subscriptions, many=True)
         return Response(serializer.data)
 
-    # def dispatch(self, request, *args, **kwargs):
-    #     res = super().dispatch(request, *args, **kwargs)
-    #     from django.db import connection
-    #     print(len(connection.queries))
-    #     for q in connection.queries:
-    #         print('>>>>>>', q['sql'])
-    #     return res
+    def dispatch(self, request, *args, **kwargs):
+        res = super().dispatch(request, *args, **kwargs)
+        from django.db import connection
+        print(len(connection.queries))
+        for q in connection.queries:
+            print('>>>>>>', q['sql'])
+        return res
 
 
 @extend_schema(tags=['Категории сервисов'], summary='Список всех категорий')

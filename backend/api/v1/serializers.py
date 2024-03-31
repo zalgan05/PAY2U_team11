@@ -80,13 +80,17 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 class SubscriptionDetailSerializer(SubscriptionSerializer):
     """Сериализатор для детального представления модели Subscription."""
 
-    tariffs = TariffSerializer(many=True)
+    # tariffs = TariffSerializer(many=True)
     banners = BannersSubscriptionSerializer(many=True)
 
     class Meta(SubscriptionSerializer.Meta):
         fields = list(SubscriptionSerializer.Meta.fields)
         fields.remove('min_price')
-        fields += ['tariffs', 'title', 'banners']
+        fields += [
+            # 'tariffs',
+            'title',
+            'banners'
+        ]
 
 # class SubscriptionDetailSerializer(serializers.ModelSerializer):
 #     """Сериализатор для детального представления модели Subscription."""

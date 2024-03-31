@@ -17,12 +17,12 @@ class CaseInsensitiveStartsWithCharFilter(CharFilter):
 class SubscriptionFilter(FilterSet):
 
     name = CaseInsensitiveStartsWithCharFilter(field_name='name')
-    categories = CharFilter(field_name='categories__slug')
+    category = CharFilter(field_name='categories__slug')
     is_favorite = BooleanFilter(method='get_is_favorite')
 
     class Meta:
         model = Subscription
-        fields = ('is_favorite', 'name', 'categories')
+        fields = ('is_favorite', 'name', 'category')
 
     def get_is_favorite(self, queryset, name, value):
         if self.request.user.is_authenticated:
