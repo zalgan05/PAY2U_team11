@@ -1,24 +1,30 @@
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Min
 # from django.utils import timezone
+
 # from dateutil.relativedelta import relativedelta
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
     OpenApiParameter
 )
+from celery.result import AsyncResult
 
 from subscriptions.models import (
     CategorySubscription,
     Subscription,
+    SubscriptionUserOrder,
     Tariff,
 )
 from .serializers import (
     CategorySubscriptionSerializer,
     MySubscriptionSerializer,
+    MyTariffUpdateSerializer,
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
@@ -28,7 +34,7 @@ from .serializers import (
 from .filters import (
     SubscriptionFilter,
 )
-from .tasks import next_bank_transaction
+from .tasks import next_bank_transaction, update_pay_status_and_due_date
 
 
 @extend_schema(tags=['Сервисы подписок'])
@@ -156,7 +162,7 @@ class SubscriptionViewSet(
                     }
                 }
             },
-        responses={201: SubscriptionOrderSerializer},
+        responses={status.HTTP_201_CREATED: SubscriptionOrderSerializer},
         summary='Оформить подписку'
     )
     @action(detail=True, methods=['post',])
@@ -172,16 +178,20 @@ class SubscriptionViewSet(
             user=self.request.user,
             subscription=subscription
         )
-        # next_bank_transaction.apply_async(
-        #     args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+        # task = next_bank_transaction.apply_async(
+        #     args=[order.id], eta=timezone.now() + relativedelta(seconds=30)
         # )
-        next_bank_transaction.apply_async(args=[order.id], eta=order.due_date)
+        task = next_bank_transaction.apply_async(
+            args=[order.id], eta=order.due_date
+        )
+        order.task_id_celery = task.id
+        order.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         tags=['Мои подписки'],
         summary='Получить мои подписки',
-        responses={200: MySubscriptionSerializer(many=True)},
+        responses={status.HTTP_200_OK: MySubscriptionSerializer(many=True)},
         parameters=[
             OpenApiParameter(
                 location=OpenApiParameter.QUERY,
@@ -216,6 +226,70 @@ class SubscriptionViewSet(
 
         serializer = MySubscriptionSerializer(subscriptions, many=True)
         return Response(serializer.data)
+
+    @extend_schema(
+        tags=['Мои подписки'],
+        summary='Изменить тариф моей подписки',
+        request={
+            'items': {
+                    'type': 'object',
+                    'properties': {
+                        'tariff': {'type': 'integer'},
+                    }
+                }
+        },
+        responses={status.HTTP_200_OK: MyTariffUpdateSerializer()}
+    )
+    @action(detail=True, methods=['patch'])
+    def change_tariff(self, request, pk):
+        """
+        Позволяет заменить текущий тариф подписки пользователя на новый тариф.
+        В теле запроса ожидается id нового тарифа.
+        """
+        subscription = get_object_or_404(Subscription, id=pk)
+        order = (
+            SubscriptionUserOrder.objects
+            .select_related('subscription')
+            .get(user=request.user, subscription=subscription)
+        )
+        serializer = MyTariffUpdateSerializer(
+            order, data=request.data, partial=True,
+            context={'request': request, 'subscription': subscription}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        tags=['Мои подписки'],
+        summary='Отменить подписку',
+        responses={status.HTTP_200_OK: None},
+    )
+    @action(detail=True, methods=['delete'])
+    def cancel(self, request, pk):
+        """Отменяет подписку пользователя на указанный сервис."""
+        try:
+            subscription = get_object_or_404(Subscription, id=pk)
+            order = (
+                SubscriptionUserOrder.objects
+                .select_related('subscription')
+                .get(user=request.user, subscription=subscription)
+            )
+        except ObjectDoesNotExist:
+            return Response(
+                {'error': 'Подписка у пользователя не найдена.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        task_id = order.task_id_celery
+        if task_id:
+            AsyncResult(task_id).revoke(terminate=True)
+        update_pay_status_and_due_date.apply_async(
+            args=[order.id], eta=order.due_date
+        )
+        # update_pay_status_and_due_date.apply_async(
+        #     args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+        # )
+        return Response(status=status.HTTP_200_OK)
 
     # def dispatch(self, request, *args, **kwargs):
     #     res = super().dispatch(request, *args, **kwargs)

@@ -11,6 +11,10 @@ from drf_spectacular.utils import (
 )
 from dateutil.relativedelta import relativedelta
 
+# from .tasks import (
+#     next_bank_transaction,
+#     update_pay_status_and_due_date
+# )
 from subscriptions.models import (
     BannersSubscription,
     CategorySubscription,
@@ -168,6 +172,29 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
         if value.subscription.id != int(sub_id):
             raise serializers.ValidationError(
                 'Выбранный тариф не принадлежит указанному сервису подписки.'
+            )
+        return value
+
+
+class MyTariffUpdateSerializer(serializers.ModelSerializer):
+    """Сериализатор для обновления тарифа подписки пользователя."""
+
+    class Meta:
+        model = SubscriptionUserOrder
+        fields = ['tariff',]
+
+    def update(self, instance, validated_data):
+        instance.tariff = validated_data['tariff']
+        instance.save()
+        return instance
+
+    def validate_tariff(self, value):
+        if (
+            not self.context['subscription']
+            .tariffs.filter(id=value.id).exists()
+        ):
+            raise serializers.ValidationError(
+                'Выбранный тариф не принадлежит указанной подписке'
             )
         return value
 
