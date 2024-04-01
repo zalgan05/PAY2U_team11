@@ -119,7 +119,8 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubscriptionUserOrder
-        fields = ['name', 'phone_number', 'email', 'tariff']
+        fields = ['name', 'phone_number', 'email', 'tariff', 'due_date']
+        read_only_fields = ['due_date',]
 
     def create(self, validated_data):
         try:

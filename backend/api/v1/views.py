@@ -3,7 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Min
-# from django.utils import timezone
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -171,9 +172,9 @@ class SubscriptionViewSet(
             user=self.request.user,
             subscription=subscription
         )
-        # next_bank_transaction.apply_async(
-        #     args=[order.id], eta=order.due_time
-        # )
+        next_bank_transaction.apply_async(
+            args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
