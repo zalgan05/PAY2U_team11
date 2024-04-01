@@ -164,13 +164,14 @@ class SubscriptionUserOrder(UserSubscription):
     """Модель связи заказа подписка-пользователь."""
 
     name = models.CharField(max_length=MAX_LENGTH)
-    phone_number = models.CharField(max_length=12, unique=True)
+    phone_number = models.CharField(max_length=12)
     email = models.EmailField()
     tariff = models.ForeignKey(
         Tariff,
         on_delete=models.CASCADE,
         related_name='orders'
     )
+    due_date = models.DateTimeField(blank=True, null=True)
     pay_status = models.BooleanField(default=True)
 
     class Meta:

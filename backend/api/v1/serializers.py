@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from rest_framework import serializers
 
 from drf_spectacular.utils import (
@@ -8,6 +9,7 @@ from drf_spectacular.utils import (
     extend_schema_field,
     # extend_schema_view,
 )
+from dateutil.relativedelta import relativedelta
 
 from subscriptions.models import (
     BannersSubscription,
@@ -117,14 +119,18 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubscriptionUserOrder
-        fields = ['name', 'phone_number', 'email', 'tariff']
+        fields = ['name', 'phone_number', 'email', 'tariff', 'due_date']
+        read_only_fields = ['due_date',]
 
     def create(self, validated_data):
         try:
             with transaction.atomic():
                 self.bank_operation(validated_data)
+                tariff = validated_data['tariff']
+                validated_data['due_date'] = (
+                    timezone.now() + relativedelta(months=(tariff.period))
+                )
                 subscription_order = super().create(validated_data)
-
         except IntegrityError:
             raise serializers.ValidationError(
                 'У пользователя уже существует подписка на этот сервис.'
