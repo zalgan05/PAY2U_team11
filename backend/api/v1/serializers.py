@@ -135,9 +135,9 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'У пользователя уже существует подписка на этот сервис.'
             )
-        except Exception as e:
+        except Exception:
             raise serializers.ValidationError(
-                f'Ошибка {e} при выполнении создании подписки. '
+                'Ошибка при выполнении создании подписки. '
                 'Повторите попытку.'
             )
         return subscription_order
