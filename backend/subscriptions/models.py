@@ -173,6 +173,10 @@ class SubscriptionUserOrder(UserSubscription):
     )
     due_date = models.DateTimeField(blank=True, null=True)
     pay_status = models.BooleanField(default=True)
+    task_id_celery = models.CharField(
+        max_length=MAX_LENGTH,
+        verbose_name='Хранит id запланированной задачи селери'
+    )
 
     class Meta:
         default_related_name = 'orders'
