@@ -190,6 +190,9 @@ class SubscriptionUserOrder(UserSubscription):
             )
         ]
 
+    def __str__(self) -> str:
+        return f'{self.user} - {self.subscription}'
+
     def clean(self):
         if self.subscription != self.tariff.subscription:
             raise ValidationError(
@@ -214,3 +217,38 @@ class IsFavoriteSubscription(UserSubscription):
                 name='unique_isfavorite',
             )
         ]
+
+
+class Transaction(models.Model):
+
+    TRANSACTION_TYPES = [
+        ('DEBIT', 'Списание'),
+        ('CASHBACK', 'Начисление кешбека'),
+    ]
+    STATUS_TYPES = [
+        ('PENDING', 'Ожидается'),
+        ('CREDITED', 'Зачислено'),
+        ('PAID', 'Оплачено'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    transaction_type = models.CharField(
+        max_length=MAX_LENGTH,
+        choices=TRANSACTION_TYPES
+    )
+    transaction_date = models.DateTimeField()
+    amount = models.IntegerField()
+    order = models.ForeignKey(
+        SubscriptionUserOrder,
+        on_delete=models.SET_NULL,
+        null=True, blank=True
+    )
+    status = models.CharField(
+        max_length=MAX_LENGTH,
+        choices=STATUS_TYPES,
+        default='PENDING'
+    )
+
+    class Meta:
+        verbose_name = 'Транзакция'
+        verbose_name_plural = 'Транзакции'

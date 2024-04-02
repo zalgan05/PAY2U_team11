@@ -178,9 +178,11 @@ class SubscriptionViewSet(
             user=self.request.user,
             subscription=subscription
         )
+        # TEst
         # task = next_bank_transaction.apply_async(
         #     args=[order.id], eta=timezone.now() + relativedelta(seconds=30)
         # )
+
         task = next_bank_transaction.apply_async(
             args=[order.id], eta=order.due_date
         )

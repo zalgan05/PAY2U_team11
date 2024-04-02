@@ -6,7 +6,8 @@ from subscriptions.models import (
     Subscription,
     Tariff,
     SubscriptionUserOrder,
-    IsFavoriteSubscription
+    IsFavoriteSubscription,
+    Transaction,
 )
 
 
@@ -86,4 +87,16 @@ class CategorySubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'slug',
+    )
+
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'order',
+        'transaction_type',
+        'transaction_date',
+        'amount',
+        'status'
     )
