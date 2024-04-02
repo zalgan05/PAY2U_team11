@@ -175,6 +175,7 @@ class SubscriptionUserOrder(UserSubscription):
     pay_status = models.BooleanField(default=True)
     task_id_celery = models.CharField(
         max_length=MAX_LENGTH,
+        blank=True, null=True,
         verbose_name='Хранит id запланированной задачи селери'
     )
 

@@ -4,7 +4,7 @@ from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Min
+from django.db.models import Min, F
 # from django.utils import timezone
 
 # from dateutil.relativedelta import relativedelta
@@ -214,15 +214,25 @@ class SubscriptionViewSet(
             Если передано значение False, возвращаются подписки
             со статусом оплаты "не оплачено".
         """
-        pay_status = self.request.query_params.get('pay_status', '').lower()
 
+        pay_status = self.request.query_params.get('pay_status', '').lower()
         user = request.user
-        subscriptions = Subscription.objects.filter(orders__user=user)
 
         if pay_status == 'true':
-            subscriptions = subscriptions.filter(orders__pay_status=True)
+            subscriptions = Subscription.objects.filter(
+                orders__pay_status=True
+            )
         elif pay_status == 'false':
-            subscriptions = subscriptions.filter(orders__pay_status=False)
+            subscriptions = Subscription.objects.filter(
+                orders__pay_status=False
+            )
+        else:
+            subscriptions = Subscription.objects.filter(orders__user=user)
+
+        subscriptions = subscriptions.annotate(
+            pay_status=F('orders__pay_status'),
+            due_date=F('orders__due_date')
+        )
 
         serializer = MySubscriptionSerializer(subscriptions, many=True)
         return Response(serializer.data)
