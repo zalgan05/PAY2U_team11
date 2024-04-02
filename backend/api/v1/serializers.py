@@ -255,7 +255,8 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
     """
 
     tariff = serializers.SerializerMethodField()
-    pay_status = serializers.SerializerMethodField()
+    pay_status = serializers.BooleanField()
+    due_date = serializers.DateTimeField()
 
     class Meta:
         model = Subscription
@@ -265,13 +266,11 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
             'logo',
             'cashback',
             'tariff',
-            'pay_status'
+            'pay_status',
+            'due_date'
         )
 
     @extend_schema_field(field=TariffSerializer())
     def get_tariff(self, obj) -> dict:
         tariff = obj.orders.select_related('tariff').get().tariff
         return TariffSerializer(tariff).data
-
-    def get_pay_status(self, obj) -> bool:
-        return obj.orders.get().pay_status
