@@ -93,6 +93,7 @@ class CategorySubscriptionAdmin(admin.ModelAdmin):
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
     list_display = (
+        'id',
         'user',
         'order',
         'transaction_type',

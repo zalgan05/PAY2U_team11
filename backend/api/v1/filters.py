@@ -1,10 +1,21 @@
-from django_filters.rest_framework import BooleanFilter, FilterSet, CharFilter
+from django_filters.rest_framework import (
+    BooleanFilter,
+    FilterSet,
+    CharFilter,
+    NumberFilter,
+    DateFilter
+)
 from django.db.models import Q
 
-from subscriptions.models import Subscription
+from subscriptions.models import Subscription, Transaction
 
 
 class CaseInsensitiveStartsWithCharFilter(CharFilter):
+    """
+    Фильтр для поиска строк, начинающихся с указанного значения,
+    с учетом регистра символов.
+    """
+
     def filter(self, qs, value):
         if value:
             return qs.filter(
@@ -15,6 +26,10 @@ class CaseInsensitiveStartsWithCharFilter(CharFilter):
 
 
 class SubscriptionFilter(FilterSet):
+    """
+    Фильтр для подписок с возможностью поиска по категории, имени
+    и установленному флагу "избранное" для текущего пользователя.
+    """
 
     name = CaseInsensitiveStartsWithCharFilter(field_name='name')
     category = CharFilter(field_name='categories__slug')
@@ -30,3 +45,19 @@ class SubscriptionFilter(FilterSet):
                 return queryset.filter(is_favorite__user=self.request.user)
             return queryset.exclude(is_favorite__user=self.request.user)
         return queryset
+
+
+class HistoryFilter(FilterSet):
+    """
+    Фильтр для транзакций с возможностью поиска по году, месяцу
+    и диапазону дат.
+    """
+
+    year = NumberFilter(field_name='transaction_date__year')
+    month = NumberFilter(field_name='transaction_date__month')
+    start_date = DateFilter(field_name='transaction_date', lookup_expr='gte')
+    end_date = DateFilter(field_name='transaction_date', lookup_expr='lte')
+
+    class Meta:
+        model = Transaction
+        fields = ('year', 'month', 'start_date', 'end_date')

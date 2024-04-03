@@ -241,7 +241,8 @@ class Transaction(models.Model):
     order = models.ForeignKey(
         SubscriptionUserOrder,
         on_delete=models.SET_NULL,
-        null=True, blank=True
+        null=True, blank=True,
+        related_name='transactions'
     )
     status = models.CharField(
         max_length=MAX_LENGTH,
@@ -252,3 +253,4 @@ class Transaction(models.Model):
     class Meta:
         verbose_name = 'Транзакция'
         verbose_name_plural = 'Транзакции'
+        ordering = ('-transaction_date',)

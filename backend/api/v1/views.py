@@ -20,9 +20,11 @@ from subscriptions.models import (
     Subscription,
     SubscriptionUserOrder,
     Tariff,
+    Transaction,
 )
 from .serializers import (
     CategorySubscriptionSerializer,
+    HistorySerializator,
     MySubscriptionSerializer,
     MyTariffUpdateSerializer,
     SubscriptionSerializer,
@@ -32,6 +34,7 @@ from .serializers import (
     TariffSerializer
 )
 from .filters import (
+    HistoryFilter,
     SubscriptionFilter,
 )
 from .tasks import next_bank_transaction, update_pay_status_and_due_date
@@ -322,3 +325,31 @@ class CategorySubscriptionViewSet(
 
     queryset = CategorySubscription.objects.all()
     serializer_class = CategorySubscriptionSerializer
+
+
+@extend_schema(tags=['История операций'], summary='Список всех операций')
+class HistoryViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    """Позволяет просматривать истории транзакций."""
+
+    serializer_class = HistorySerializator
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = HistoryFilter
+    queryset = Transaction.objects.all()
+
+    def get_queryset(self):
+        return (
+            Transaction.objects.filter(user=self.request.user)
+            .select_related('order')
+            .prefetch_related('order__subscription__categories')
+        )
+
+    # def dispatch(self, request, *args, **kwargs):
+    #     res = super().dispatch(request, *args, **kwargs)
+    #     from django.db import connection
+    #     print(len(connection.queries))
+    #     for q in connection.queries:
+    #         print('>>>>>>', q['sql'])
+    #     return res

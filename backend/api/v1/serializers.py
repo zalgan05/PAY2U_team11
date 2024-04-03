@@ -19,6 +19,7 @@ from subscriptions.models import (
     Tariff,
     IsFavoriteSubscription,
     SubscriptionUserOrder,
+    Transaction,
 )
 
 User = get_user_model()
@@ -255,3 +256,34 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
     def get_tariff(self, obj) -> dict:
         tariff = obj.orders.select_related('tariff').get().tariff
         return TariffSerializer(tariff).data
+
+
+class SubscriptionForHistorySerializer(serializers.ModelSerializer):
+    """Сериализатор для подписок в истории транзакций."""
+
+    categories = CategorySubscriptionSerializer(many=True)
+
+    class Meta:
+        model = Subscription
+        fields = ('id', 'name', 'logo', 'categories')
+
+
+class HistorySerializator(serializers.ModelSerializer):
+    """Сериализатор для транзакций в истории.."""
+
+    subscription = SubscriptionForHistorySerializer(
+        source='order.subscription'
+    )
+    tariff = serializers.ReadOnlyField(source='order.tariff.slug')
+
+    class Meta:
+        model = Transaction
+        fields = (
+            'id',
+            'subscription',
+            'tariff',
+            'transaction_type',
+            'transaction_date',
+            'amount',
+            'status'
+        )
