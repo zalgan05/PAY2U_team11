@@ -71,32 +71,27 @@ def pay_cashback():
         transactions = Transaction.objects.filter(
             transaction_type='CASHBACK',
             status='PENDING',
-        )
+        ).values('user').annotate(total_cashback=Sum('amount'))
 
-        transactions_by_user = (
-            transactions.values('user')
-            .annotate(total_cashback=Sum('amount'))
-        )
-
-        for transaction_data in transactions_by_user:
+        for transaction_data in transactions:
             user = User.objects.get(id=transaction_data['user'])
             cashback_amount = transaction_data['total_cashback']
 
             with transaction.atomic():
                 user.balance += cashback_amount
                 user.save(update_fields=['balance'])
-
-            transactions.filter(user=user).update(status='CREDITED')
+                transactions.filter(user=user).update(status='CREDITED')
     except Exception as e:
         print(e)
 
     print('<<<<<<<<<<<<ВСЕ КЕШБЕКИ ВЫПЛАЧЕНЫ>>>>>>>>>>>>')
 
 
+# from datetime import timedelta
 celery_app.conf.beat_schedule = {
     'pay_cashback': {
         'task': 'api.v1.tasks.pay_cashback',
-        'schedule': crontab(hour=3, minute=38),
-        # 'schedule': crontab(day_of_month=25, hour=0, minute=0),
+        # 'schedule': timedelta(seconds=30),
+        'schedule': crontab(day_of_month=25, hour=0, minute=0),
     },
 }

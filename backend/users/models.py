@@ -19,7 +19,9 @@ class User(AbstractUser):
         max_length=MAX_LENGTH,
         verbose_name='Фамилия'
     )
-    balance = models.IntegerField()
+    balance = models.IntegerField(
+        null=True, blank=True
+    )
 
     class Meta:
         verbose_name = 'Пользователь'

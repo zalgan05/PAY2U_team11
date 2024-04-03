@@ -100,3 +100,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'amount',
         'status'
     )
+    list_filter = (
+        'status',
+        'transaction_type'
+    )
