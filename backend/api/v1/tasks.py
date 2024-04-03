@@ -1,10 +1,17 @@
 from celery import shared_task
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from dateutil.relativedelta import relativedelta
+from celery.schedules import crontab
 
 from .services import current_transaction, future_transaction
 from subscriptions.models import SubscriptionUserOrder, Transaction
+from backend.celery import app as celery_app
+
+
+User = get_user_model()
 
 
 @shared_task
@@ -56,3 +63,40 @@ def update_pay_status_and_due_date(order_id):
     order.pay_status = False
     order.due_date = None
     order.save()
+
+
+@shared_task
+def pay_cashback():
+    try:
+        transactions = Transaction.objects.filter(
+            transaction_type='CASHBACK',
+            status='PENDING',
+        )
+
+        transactions_by_user = (
+            transactions.values('user')
+            .annotate(total_cashback=Sum('amount'))
+        )
+
+        for transaction_data in transactions_by_user:
+            user = User.objects.get(id=transaction_data['user'])
+            cashback_amount = transaction_data['total_cashback']
+
+            with transaction.atomic():
+                user.balance += cashback_amount
+                user.save(update_fields=['balance'])
+
+            transactions.filter(user=user).update(status='CREDITED')
+    except Exception as e:
+        print(e)
+
+    print('<<<<<<<<<<<<ВСЕ КЕШБЕКИ ВЫПЛАЧЕНЫ>>>>>>>>>>>>')
+
+
+celery_app.conf.beat_schedule = {
+    'pay_cashback': {
+        'task': 'api.v1.tasks.pay_cashback',
+        'schedule': crontab(hour=3, minute=38),
+        # 'schedule': crontab(day_of_month=25, hour=0, minute=0),
+    },
+}
