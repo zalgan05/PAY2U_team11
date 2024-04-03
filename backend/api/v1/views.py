@@ -5,9 +5,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Min, F
-# from django.utils import timezone
+from django.utils import timezone
 
-# from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -179,13 +179,13 @@ class SubscriptionViewSet(
             subscription=subscription
         )
         # TEst
-        # task = next_bank_transaction.apply_async(
-        #     args=[order.id], eta=timezone.now() + relativedelta(seconds=30)
-        # )
-
         task = next_bank_transaction.apply_async(
-            args=[order.id], eta=order.due_date
+            args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
         )
+
+        # task = next_bank_transaction.apply_async(
+        #     args=[order.id], eta=order.due_date
+        # )
         order.task_id_celery = task.id
         order.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -295,12 +295,13 @@ class SubscriptionViewSet(
         task_id = order.task_id_celery
         if task_id:
             AsyncResult(task_id).revoke(terminate=True)
-        update_pay_status_and_due_date.apply_async(
-            args=[order.id], eta=order.due_date
-        )
         # update_pay_status_and_due_date.apply_async(
-        #     args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+        #     args=[order.id], eta=order.due_date
         # )
+        # Test
+        update_pay_status_and_due_date.apply_async(
+            args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+        )
         return Response(status=status.HTTP_200_OK)
 
     # def dispatch(self, request, *args, **kwargs):

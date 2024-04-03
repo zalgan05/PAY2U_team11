@@ -3,7 +3,8 @@ from django.db import transaction
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 
-from subscriptions.models import SubscriptionUserOrder
+from .services import current_transaction, future_transaction
+from subscriptions.models import SubscriptionUserOrder, Transaction
 
 
 @shared_task
@@ -12,23 +13,38 @@ def next_bank_transaction(order_id):
     try:
         order = SubscriptionUserOrder.objects.get(id=order_id)
         user = order.user
+        price = order.tariff.price_per_period
         with transaction.atomic():
-            user.balance -= order.tariff.price
+            user.balance -= price
             user.save(update_fields=['balance'])
+            trans = Transaction.objects.get(
+                user=user,
+                order=order,
+                transaction_type='DEBIT',
+                status='PENDING'
+            )
+            trans.status = 'PAID'
+            trans.save()
+        current_transaction(user, order, price)
         new_due_date = (
             timezone.now() + relativedelta(months=order.tariff.period)
         )
         order.due_date = new_due_date
-        # task = next_bank_transaction.apply_async(
-        #     args=[order_id], eta=timezone.now() + relativedelta(seconds=10)
-        # )
+        future_transaction(user, order, price)
+
+        # Test
         task = next_bank_transaction.apply_async(
-            args=[order_id], eta=new_due_date
+            args=[order_id], eta=timezone.now() + relativedelta(seconds=10)
         )
+
+        # task = next_bank_transaction.apply_async(
+        #     args=[order_id], eta=new_due_date
+        # )
         order.task_id_celery = task.id
         order.save()
 
-    except Exception:
+    except Exception as e:
+        print(e)
         order.pay_status = False
         order.save()
 

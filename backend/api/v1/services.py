@@ -38,6 +38,14 @@ def current_transaction(user, subscription_order, price):
         transaction_date=timezone.now(),
         status='PAID'
     )
+    Transaction.objects.create(
+        user=user,
+        order=subscription_order,
+        amount=price,
+        transaction_type='CASHBACK',
+        transaction_date=timezone.now(),
+        status='PENDING'
+    )
 
 
 def future_transaction(user, subscription_order, price):
