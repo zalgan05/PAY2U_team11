@@ -102,6 +102,7 @@ class TransactionAdmin(admin.ModelAdmin):
         'status'
     )
     list_filter = (
+        'user',
         'status',
         'transaction_type'
     )

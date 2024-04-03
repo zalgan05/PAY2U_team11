@@ -268,7 +268,7 @@ class SubscriptionForHistorySerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'logo', 'categories')
 
 
-class HistorySerializator(serializers.ModelSerializer):
+class HistoryTransactionSerializator(serializers.ModelSerializer):
     """Сериализатор для транзакций в истории.."""
 
     subscription = SubscriptionForHistorySerializer(
@@ -285,5 +285,12 @@ class HistorySerializator(serializers.ModelSerializer):
             'transaction_type',
             'transaction_date',
             'amount',
-            'status'
+            'status',
         )
+
+
+class InfoTransactionSerializator(serializers.Serializer):
+
+    total_next_month = serializers.IntegerField()
+    total_current_month = serializers.IntegerField()
+    total_param = serializers.IntegerField()

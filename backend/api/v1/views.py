@@ -15,6 +15,13 @@ from drf_spectacular.utils import (
 )
 from celery.result import AsyncResult
 
+from .selectors import (
+    get_filtered_transaction_queryset,
+    get_transaction_queryset,
+)
+from .services import (
+    get_transaction_totals,
+)
 from subscriptions.models import (
     CategorySubscription,
     Subscription,
@@ -24,7 +31,8 @@ from subscriptions.models import (
 )
 from .serializers import (
     CategorySubscriptionSerializer,
-    HistorySerializator,
+    HistoryTransactionSerializator,
+    InfoTransactionSerializator,
     MySubscriptionSerializer,
     MyTariffUpdateSerializer,
     SubscriptionSerializer,
@@ -334,17 +342,95 @@ class HistoryViewSet(
 ):
     """Позволяет просматривать истории транзакций."""
 
-    serializer_class = HistorySerializator
+    serializer_class = HistoryTransactionSerializator
     filter_backends = (DjangoFilterBackend,)
     filterset_class = HistoryFilter
     queryset = Transaction.objects.all()
 
     def get_queryset(self):
-        return (
-            Transaction.objects.filter(user=self.request.user)
-            .select_related('order')
-            .prefetch_related('order__subscription__categories')
+        qs = Transaction.objects.filter(user=self.request.user)
+        if self.action == 'list':
+            return (
+                qs.select_related('order')
+                .prefetch_related('order__subscription__categories')
+            )
+        return qs
+
+    @extend_schema(
+        tags=['История операций'],
+        summary='Траты за текущий и будущий месяц',
+        responses={status.HTTP_200_OK: InfoTransactionSerializator()},
+    )
+    @action(detail=False, methods=['get'], filterset_class=HistoryFilter)
+    def info(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        user = self.request.user
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        month = self.request.query_params.get('month')
+        year = self.request.query_params.get('year')
+
+        queryset_filtered = get_filtered_transaction_queryset(
+            queryset,
+            start_date=start_date,
+            end_date=end_date,
+            month=month,
+            year=year
         )
+        queryset = get_transaction_queryset(user=user)
+
+        current_date = timezone.now()
+        next_month_date = current_date + relativedelta(months=1)
+
+        totals = get_transaction_totals(
+            queryset_filtered,
+            queryset,
+            current_date,
+            next_month_date
+        )
+
+        # operation = Transaction.objects.filter(
+        #     user=self.request.user
+        # ).aggregate(
+        #     total_next_month=Sum(
+        #         'amount',
+        #         filter=Q(transaction_date__month=next_month_date.month)
+        #     ),
+        #     total_current_month=Sum(
+        #         'amount',
+        #         filter=Q(transaction_date__month=current_date.month)
+        #     )
+        # )
+
+        # if start_date and end_date:
+        #     queryset = queryset.filter(
+        #         transaction_date__gte=start_date,
+        #         transaction_date__lte=end_date
+        #     )
+        # elif month and year:
+        #     queryset = queryset.filter(
+        #         transaction_date__month=month,
+        #         transaction_date__year=year
+        #     )
+
+        # total_param = queryset.aggregate(
+        #     total_param=Sum('amount')
+        # )['total_param']
+        # total_next_month = Transaction.objects.filter(
+        #     user=self.request.user,
+        #     transaction_date__month=next_month_date.month
+        # ).aggregate(total_next_month=Sum('amount'))['total_next_month']
+        # total_current_month = Transaction.objects.filter(
+        #     user=self.request.user,
+        #     transaction_date__month=current_date.month
+        # ).aggregate(total_current_month=Sum('amount'))['total_current_month']
+        # operation = {
+        #     'total_current_month': total_current_month,
+        #     'total_next_month': total_next_month,
+        #     'total_param': total_param
+        # }
+        serializer = InfoTransactionSerializator(totals)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     # def dispatch(self, request, *args, **kwargs):
     #     res = super().dispatch(request, *args, **kwargs)

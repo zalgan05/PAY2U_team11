@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import Sum
 
 from subscriptions.models import Tariff, Transaction
 
@@ -57,3 +58,29 @@ def future_transaction(user, subscription_order, price):
         transaction_date=subscription_order.due_date,
         status='PENDING'
     )
+
+
+def get_transaction_totals(
+        queryset_filtered,
+        queryset,
+        current_date,
+        next_month_date
+):
+
+    total_param = queryset_filtered.aggregate(
+        total_param=Sum('amount')
+    )['total_param']
+
+    total_next_month = queryset.filter(
+        transaction_date__month=next_month_date.month
+    ).aggregate(total_next_month=Sum('amount'))['total_next_month']
+
+    total_current_month = queryset.filter(
+        transaction_date__month=current_date.month
+    ).aggregate(total_current_month=Sum('amount'))['total_current_month']
+
+    return {
+        'total_current_month': total_current_month,
+        'total_next_month': total_next_month,
+        'total_param': total_param
+    }
