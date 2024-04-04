@@ -163,3 +163,4 @@ migrations/
 .migrations
 
 media/
+swagger

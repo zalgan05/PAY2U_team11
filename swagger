@@ -34,6 +34,7 @@ paths:
     get:
       operationId: api_v1_categories_list
       description: Возвращает список доступных категорий сервисов.
+      summary: Список всех категорий
       tags:
       - Категории сервисов
       security:
@@ -47,13 +48,102 @@ paths:
                 items:
                   $ref: '#/components/schemas/CategorySubscription'
           description: ''
+  /api/v1/history/:
+    get:
+      operationId: api_v1_history_list
+      description: Позволяет просматривать истории транзакций.
+      summary: Список всех операций
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: month
+        schema:
+          type: number
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: year
+        schema:
+          type: number
+      tags:
+      - История операций
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoryTransactionSerializator'
+          description: ''
+  /api/v1/history/info/:
+    get:
+      operationId: api_v1_history_info_retrieve
+      description: |-
+        Возвращает информацию о сумме транзакций
+        пользователя за определенный период.
+
+        Возвращает:
+        - total_next_month (int): Общая сумма списаний пользователя
+        за следующий месяц.
+        - total_current_month (int): Общая сумма списаний пользователя
+        за текущий месяц.
+        - total_param (int): Общая сумма списаний пользователя
+        с учетом параметров фильтрации.
+        - total_cashback (int): Сумма транзакций кешбека пользователя
+        с 25 числа прошлого месяца до 25 числа текущего месяца.
+      summary: Траты за текущий и будущий месяц и по параметрам
+      parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: 'Дата окончания периода (формат: YYYY-MM-DD)'
+      - in: query
+        name: month
+        schema:
+          type: integer
+        description: Месяц
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: 'Дата начала периода (формат: YYYY-MM-DD)'
+      - in: query
+        name: year
+        schema:
+          type: integer
+        description: Год
+      tags:
+      - История операций
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoTransactionSerializator'
+          description: ''
   /api/v1/subscriptions/:
     get:
       operationId: api_v1_subscriptions_list
       description: Позволяет просматривать список доступных подписок.
+      summary: Получить список всех сервисов
       parameters:
       - in: query
-        name: categories
+        name: category
         schema:
           type: string
       - in: query
@@ -64,6 +154,14 @@ paths:
         name: name
         schema:
           type: string
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - name
+          - popular_rate
+        description: Поля для сортировки
       tags:
       - Сервисы подписок
       security:
@@ -75,12 +173,13 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Subscription'
+                  $ref: '#/components/schemas/SubscriptionCatalog'
           description: ''
   /api/v1/subscriptions/{id}/:
     get:
       operationId: api_v1_subscriptions_retrieve
       description: Позволяет просматривать список доступных подписок.
+      summary: Получить детальную информацию одного сервиса
       parameters:
       - in: path
         name: id
@@ -99,10 +198,63 @@ paths:
               schema:
                 $ref: '#/components/schemas/SubscriptionDetail'
           description: ''
+  /api/v1/subscriptions/{id}/cancel/:
+    delete:
+      operationId: api_v1_subscriptions_cancel_destroy
+      description: Отменяет подписку пользователя на указанный сервис.
+      summary: Отменить подписку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Сервис подписки.
+        required: true
+      tags:
+      - Мои подписки
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/subscriptions/{id}/change_tariff/:
+    patch:
+      operationId: api_v1_subscriptions_change_tariff_partial_update
+      description: |-
+        Позволяет заменить текущий тариф подписки пользователя на новый тариф.
+        В теле запроса ожидается id нового тарифа.
+      summary: Изменить тариф моей подписки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Сервис подписки.
+        required: true
+      tags:
+      - Мои подписки
+      requestBody:
+        content:
+          items:
+            schema:
+              type: object
+              properties:
+                tariff:
+                  type: integer
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyTariffUpdate'
+          description: ''
   /api/v1/subscriptions/{id}/favorite/:
     post:
       operationId: api_v1_subscriptions_favorite_create
       description: Добавляет подписку в избранное для текущего пользователя.
+      summary: Добавить сервис в избранное
       parameters:
       - in: path
         name: id
@@ -120,6 +272,7 @@ paths:
     delete:
       operationId: api_v1_subscriptions_favorite_destroy
       description: Удаляет подписку из избранного для текущего пользователя.
+      summary: Удалить сервис из избранного
       parameters:
       - in: path
         name: id
@@ -134,10 +287,40 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/subscriptions/{id}/mytariff/:
+    get:
+      operationId: api_v1_subscriptions_mytariff_retrieve
+      description: Получить мой тариф подписки на сервис.
+      summary: Получить мой тариф подписки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Сервис подписки.
+        required: true
+      tags:
+      - Мои подписки
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MyTariff'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                error: Тариф не найден
+          description: ''
   /api/v1/subscriptions/{id}/order/:
     post:
       operationId: api_v1_subscriptions_order_create
       description: Создает заказ на подписку сервиса.
+      summary: Оформить подписку
       parameters:
       - in: path
         name: id
@@ -153,7 +336,7 @@ paths:
             schema:
               type: object
               properties:
-                name_subscriber:
+                name:
                   type: string
                 phone_number:
                   type: integer
@@ -170,6 +353,94 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SubscriptionOrder'
+          description: ''
+  /api/v1/subscriptions/{id}/resume_order/:
+    post:
+      operationId: api_v1_subscriptions_resume_order_create
+      description: Возобновляет подписку уже существовавшую ранее у пользователя.
+      summary: Возобновить подписку
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Сервис подписки.
+        required: true
+      tags:
+      - Мои подписки
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/subscriptions/{id}/tariffs/:
+    get:
+      operationId: api_v1_subscriptions_tariffs_list
+      description: Получить все тарифы сервиса подписок.
+      summary: Получить все тарифы подписки
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Сервис подписки.
+        required: true
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      tags:
+      - Сервисы подписок
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tariff'
+          description: ''
+  /api/v1/subscriptions/my/:
+    get:
+      operationId: api_v1_subscriptions_my_list
+      description: |-
+        Получает подписки текущего пользователя.
+
+        Parameters:
+        - pay_status (bool, optional): Фильтр по статусу оплаты подписок.
+            Позволяет фильтровать подписки по статусу оплаты.
+            Если передано значение True, возвращаются подписки
+            со статусом оплаты "оплачено".
+            Если передано значение False, возвращаются подписки
+            со статусом оплаты "не оплачено".
+      summary: Получить мои подписки
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: pay_status
+        schema:
+          type: boolean
+      tags:
+      - Мои подписки
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MySubscription'
           description: ''
 components:
   schemas:
@@ -198,8 +469,22 @@ components:
       required:
       - password
       - username
+    BannersSubscription:
+      type: object
+      description: Сериализатор для картинок баннера сервиса подписки.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        image:
+          type: string
+          format: uri
+      required:
+      - id
+      - image
     CategorySubscription:
       type: object
+      description: Сериализатор для модели категории сервиса подписки.
       properties:
         id:
           type: integer
@@ -215,6 +500,134 @@ components:
       - id
       - name
       - slug
+    HistoryTransactionSerializator:
+      type: object
+      description: Сериализатор для транзакций в истории..
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subscription:
+          $ref: '#/components/schemas/SubscriptionForHistory'
+        tariff:
+          type: string
+          nullable: true
+          readOnly: true
+        transaction_type:
+          $ref: '#/components/schemas/TransactionTypeEnum'
+        transaction_date:
+          type: string
+          format: date-time
+        amount:
+          type: integer
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+      required:
+      - amount
+      - id
+      - subscription
+      - tariff
+      - transaction_date
+      - transaction_type
+    InfoTransactionSerializator:
+      type: object
+      description: Сериализатор для информации о суммах транзакциях.
+      properties:
+        total_next_month:
+          type: integer
+        total_current_month:
+          type: integer
+        total_param:
+          type: integer
+        total_cashback:
+          type: integer
+      required:
+      - total_cashback
+      - total_current_month
+      - total_next_month
+      - total_param
+    MySubscription:
+      type: object
+      description: |-
+        Сериализатор для модели SubscriptionUserOrder для использования
+        в представлении my для отображения подписок пользователя.
+
+        Поля:
+        - id (int): Идентификатор подписки пользователя.
+        - name (str): Название подписки пользователя.
+        - logo (str): URL-адрес логотипа подписки пользователя.
+        - cashback (int): Процент кешбэка для подписки пользователя.
+        - tariff (dict): Информация о тарифе подписки пользователя.
+        - pay_status (str): Статус оплаты подписки пользователя.
+        - due_date (date): Дата окончания подписки пользователя.
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        logo:
+          type: string
+          format: uri
+        cashback:
+          type: integer
+        tariff:
+          $ref: '#/components/schemas/Tariff'
+        pay_status:
+          type: boolean
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - cashback
+      - id
+      - logo
+      - name
+      - tariff
+    MyTariff:
+      type: object
+      description: |-
+        Сериализатор для модели SubscriptionUserOrder, представляющий
+        информацию о тарифе подписки.
+
+        Поля:
+        - id (int): Уникальный идентификатор тарифа.
+        - price_per_period (int): Цена за период тарифа.
+        - slug (str): Уникальный идентификатор тарифа.
+        - due_date (date): Дата слеюущего списания средств.
+        - cashback (int): Рассчитанная сумма кэшбэка от стоимости тарифа.
+
+        Методы:
+        - get_cashback: Метод для рассчета суммы кэшбэка на основе
+        цены тарифа и процента кэшбэка.
+      properties:
+        id:
+          type: integer
+        price_per_period:
+          type: integer
+        slug:
+          type: string
+          pattern: ^[-a-zA-Z0-9_]+$
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+        cashback:
+          type: integer
+          readOnly: true
+      required:
+      - cashback
+      - id
+      - price_per_period
+      - slug
+    MyTariffUpdate:
+      type: object
+      description: Сериализатор для обновления тарифа подписки пользователя.
+      properties:
+        tariff:
+          type: integer
+      required:
+      - tariff
     PeriodEnum:
       enum:
       - 1
@@ -227,9 +640,28 @@ components:
         * `3` - 3
         * `6` - 6
         * `12` - 12
-    Subscription:
+    StatusEnum:
+      enum:
+      - PENDING
+      - CREDITED
+      - PAID
+      type: string
+      description: |-
+        * `PENDING` - Ожидается
+        * `CREDITED` - Зачислено
+        * `PAID` - Оплачено
+    SubscriptionCatalog:
       type: object
-      description: Сериализатор для модели Subscription.
+      description: |-
+        Сериализатор для модели Subscription, используемый в каталоге подписок.
+
+        Дополнительные поля:
+        - description (str): Описание подписки.
+        - categories (list): Список категорий подписки.
+        - popular_rate (float): Рейтинг популярности подписки.
+        - min_price (int): Минимальная цена подписки.
+        - is_favorite (bool): Флаг, указывающий, добавлена ли подписка в избранное
+          для пользователя.
       properties:
         id:
           type: integer
@@ -237,18 +669,22 @@ components:
         name:
           type: string
           maxLength: 64
+        logo:
+          type: string
+          format: uri
+        cashback:
+          type: integer
         description:
           type: string
         categories:
           type: array
           items:
             $ref: '#/components/schemas/CategorySubscription'
-        cashback:
+        popular_rate:
           type: integer
+          maximum: 100
         min_price:
           type: integer
-          description: Возвращает минимальную цену подписки.
-          readOnly: true
         is_favorite:
           type: boolean
           description: Проверяет, добавлен ли сервис в избранное для пользователя.
@@ -259,11 +695,18 @@ components:
       - description
       - id
       - is_favorite
+      - logo
       - min_price
       - name
+      - popular_rate
     SubscriptionDetail:
       type: object
-      description: Сериализатор для детального представления модели Subscription.
+      description: |-
+        Сериализатор для детального представления модели Subscription.
+
+        Дополнительные поля:
+        - title (str): Подзаголовок подписки.
+        - banners (list): Список URL-адресов баннеров (картинок) для подписки.
       properties:
         id:
           type: integer
@@ -271,34 +714,64 @@ components:
         name:
           type: string
           maxLength: 64
+        logo:
+          type: string
+          format: uri
+        cashback:
+          type: integer
         description:
           type: string
         categories:
           type: array
           items:
             $ref: '#/components/schemas/CategorySubscription'
-        cashback:
+        popular_rate:
           type: integer
+          maximum: 100
         is_favorite:
           type: boolean
           description: Проверяет, добавлен ли сервис в избранное для пользователя.
           readOnly: true
-        tariffs:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tariff'
         title:
           type: string
           maxLength: 64
+        banners:
+          type: array
+          items:
+            $ref: '#/components/schemas/BannersSubscription'
       required:
+      - banners
       - cashback
       - categories
       - description
       - id
       - is_favorite
+      - logo
       - name
-      - tariffs
+      - popular_rate
       - title
+    SubscriptionForHistory:
+      type: object
+      description: Сериализатор для подписок в истории транзакций.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 64
+        logo:
+          type: string
+          format: uri
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySubscription'
+      required:
+      - categories
+      - id
+      - logo
+      - name
     SubscriptionOrder:
       type: object
       description: Сериализатор для создания заказа подписки.
@@ -307,14 +780,21 @@ components:
           type: string
           maxLength: 64
         phone_number:
-          type: integer
+          type: string
+          maxLength: 12
         email:
           type: string
           format: email
           maxLength: 254
         tariff:
           type: integer
+        due_date:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
       required:
+      - due_date
       - email
       - name
       - phone_number
@@ -345,6 +825,14 @@ components:
       - discount
       - id
       - period
+    TransactionTypeEnum:
+      enum:
+      - DEBIT
+      - CASHBACK
+      type: string
+      description: |-
+        * `DEBIT` - Списание
+        * `CASHBACK` - Начисление кешбека
   securitySchemes:
     tokenAuth:
       type: apiKey
