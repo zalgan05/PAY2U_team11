@@ -330,6 +330,16 @@ class SubscriptionViewSet(
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        transaction_order = Transaction.objects.get(
+            user=self.request.user,
+            order=order,
+            transaction_type='DEBIT',
+            status='PENDING'
+        )
+        transaction_order.amount = order.tariff.price_per_period
+        transaction_order.save()
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
