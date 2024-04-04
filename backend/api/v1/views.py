@@ -11,15 +11,13 @@ from dateutil.relativedelta import relativedelta
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
-    OpenApiParameter
+    OpenApiParameter,
+    OpenApiTypes
 )
 from celery.result import AsyncResult
 
-from .selectors import (
-    get_filtered_transaction_queryset,
-    get_transaction_queryset,
-)
 from .services import (
+    get_cashback_transactions_period,
     get_transaction_totals,
 )
 from subscriptions.models import (
@@ -358,77 +356,74 @@ class HistoryViewSet(
 
     @extend_schema(
         tags=['История операций'],
-        summary='Траты за текущий и будущий месяц',
+        summary='Траты за текущий и будущий месяц и по параметрам',
         responses={status.HTTP_200_OK: InfoTransactionSerializator()},
+        parameters=[
+            OpenApiParameter(
+                name='start_date',
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                description='Дата начала периода (формат: YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='end_date',
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                description='Дата окончания периода (формат: YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='month',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='Месяц'
+            ),
+            OpenApiParameter(
+                name='year',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='Год'
+            ),
+        ]
     )
-    @action(detail=False, methods=['get'], filterset_class=HistoryFilter)
+    @action(detail=False, methods=['get'])
     def info(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        user = self.request.user
-        start_date = self.request.query_params.get('start_date')
-        end_date = self.request.query_params.get('end_date')
-        month = self.request.query_params.get('month')
-        year = self.request.query_params.get('year')
+        """
+        Возвращает информацию о сумме транзакций
+        пользователя за определенный период.
 
-        queryset_filtered = get_filtered_transaction_queryset(
-            queryset,
-            start_date=start_date,
-            end_date=end_date,
-            month=month,
-            year=year
+        Возвращает:
+        - total_next_month (int): Общая сумма списаний пользователя
+        за следующий месяц.
+        - total_current_month (int): Общая сумма списаний пользователя
+        за текущий месяц.
+        - total_param (int): Общая сумма списаний пользователя
+        с учетом параметров фильтрации.
+        - total_cashback (int): Сумма транзакций кешбека пользователя
+        с 25 числа прошлого месяца до 25 числа текущего месяца.
+        """
+        queryset_filtered = self.filter_queryset(self.get_queryset()).filter(
+            transaction_type='DEBIT'
         )
-        queryset = get_transaction_queryset(user=user)
+        queryset = self.get_queryset().filter(transaction_type='DEBIT')
 
         current_date = timezone.now()
         next_month_date = current_date + relativedelta(months=1)
 
+        start_date, end_date = get_cashback_transactions_period()
+        queryset_cashback = self.get_queryset().filter(
+            transaction_date__gte=start_date,
+            transaction_date__lte=end_date,
+            transaction_type='DEBIT'
+        )
+
         totals = get_transaction_totals(
             queryset_filtered,
             queryset,
+            queryset_cashback,
             current_date,
             next_month_date
         )
 
-        # operation = Transaction.objects.filter(
-        #     user=self.request.user
-        # ).aggregate(
-        #     total_next_month=Sum(
-        #         'amount',
-        #         filter=Q(transaction_date__month=next_month_date.month)
-        #     ),
-        #     total_current_month=Sum(
-        #         'amount',
-        #         filter=Q(transaction_date__month=current_date.month)
-        #     )
-        # )
-
-        # if start_date and end_date:
-        #     queryset = queryset.filter(
-        #         transaction_date__gte=start_date,
-        #         transaction_date__lte=end_date
-        #     )
-        # elif month and year:
-        #     queryset = queryset.filter(
-        #         transaction_date__month=month,
-        #         transaction_date__year=year
-        #     )
-
-        # total_param = queryset.aggregate(
-        #     total_param=Sum('amount')
-        # )['total_param']
-        # total_next_month = Transaction.objects.filter(
-        #     user=self.request.user,
-        #     transaction_date__month=next_month_date.month
-        # ).aggregate(total_next_month=Sum('amount'))['total_next_month']
-        # total_current_month = Transaction.objects.filter(
-        #     user=self.request.user,
-        #     transaction_date__month=current_date.month
-        # ).aggregate(total_current_month=Sum('amount'))['total_current_month']
-        # operation = {
-        #     'total_current_month': total_current_month,
-        #     'total_next_month': total_next_month,
-        #     'total_param': total_param
-        # }
         serializer = InfoTransactionSerializator(totals)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

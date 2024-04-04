@@ -290,7 +290,9 @@ class HistoryTransactionSerializator(serializers.ModelSerializer):
 
 
 class InfoTransactionSerializator(serializers.Serializer):
+    """Сериализатор для информации о суммах транзакциях."""
 
     total_next_month = serializers.IntegerField()
     total_current_month = serializers.IntegerField()
     total_param = serializers.IntegerField()
+    total_cashback = serializers.IntegerField()

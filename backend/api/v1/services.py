@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.db import transaction
 from django.utils import timezone
 from django.db.models import Sum
+from dateutil.relativedelta import relativedelta
 
 from subscriptions.models import Tariff, Transaction
 
@@ -60,13 +61,42 @@ def future_transaction(user, subscription_order, price):
     )
 
 
+def get_cashback_transactions_period():
+    """
+    Возвращает начальную и конечную даты периода
+    для расчета транзакций кешбека.
+    """
+    today = timezone.now().replace(hour=23, minute=59, second=59)
+    last_month = today - relativedelta(months=1)
+    start_date = last_month.replace(day=25)
+    end_date = today.replace(day=25)
+    return start_date, end_date
+
+
 def get_transaction_totals(
         queryset_filtered,
         queryset,
+        queryset_cashback,
         current_date,
         next_month_date
 ):
+    """
+    Вычисляет общие суммы транзакций для различных категорий.
 
+    Аргументы:
+    - queryset_filtered (QuerySet): Фильтрованный QuerySet для транзакций списания.
+    - queryset (QuerySet): QuerySet транзакций списания.
+    - queryset_cashback (QuerySet): QuerySet транзакций кешбека.
+    - current_date (datetime): Текущая дата.
+    - next_month_date (datetime): Дата следующего месяца.
+
+    Возвращает:
+    - total_current_month (int): Общая сумма транзакций списания пользователя за текущий месяц.
+    - total_next_month (int): Общая сумма транзакций списания пользователя за следующий месяц.
+    - total_param (int): Общая сумма транзакций списания пользователя с учетом параметров фильтрации.
+    - total_cashback (int): Сумма транзакций кешбека пользователя за указанный период.
+    # noqa
+    """
     total_param = queryset_filtered.aggregate(
         total_param=Sum('amount')
     )['total_param']
@@ -79,8 +109,13 @@ def get_transaction_totals(
         transaction_date__month=current_date.month
     ).aggregate(total_current_month=Sum('amount'))['total_current_month']
 
+    total_cashback = queryset_cashback.aggregate(
+        total_cashback=Sum('amount')
+    )['total_cashback']
+
     return {
         'total_current_month': total_current_month,
         'total_next_month': total_next_month,
-        'total_param': total_param
+        'total_param': total_param,
+        'total_cashback': total_cashback
     }
