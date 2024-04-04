@@ -4,7 +4,7 @@ from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Min, F
+from django.db.models import Min
 from django.utils import timezone
 
 from dateutil.relativedelta import relativedelta
@@ -33,6 +33,7 @@ from .serializers import (
     InfoTransactionSerializator,
     MySubscriptionSerializer,
     MyTariffUpdateSerializer,
+    SubscriptionCatalogSerializer,
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
@@ -72,9 +73,10 @@ class SubscriptionViewSet(
 ):
     """Позволяет просматривать список доступных подписок."""
 
-    queryset = Subscription.objects.annotate(
-        min_price=Min('tariffs__price_per_month')
-    ).prefetch_related('categories',)
+    # queryset = Subscription.objects.annotate(
+    #     min_price=Min('tariffs__price_per_month')
+    # ).prefetch_related('categories',)
+    queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = SubscriptionFilter
@@ -84,15 +86,22 @@ class SubscriptionViewSet(
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return SubscriptionDetailSerializer
+        elif self.action == 'list':
+            return SubscriptionCatalogSerializer
         return super().get_serializer_class()
 
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return Subscription.objects.prefetch_related(
+        queryset = super().get_queryset()
+        if self.action == 'list':
+            return queryset.annotate(
+                min_price=Min('tariffs__price_per_month')
+            ).prefetch_related('categories',)
+        elif self.action == 'retrieve':
+            return queryset.prefetch_related(
                 'categories',
                 'banners',
             )
-        return super().get_queryset()
+        return queryset
 
     @extend_schema(
         responses={status.HTTP_200_OK: TariffSerializer(many=True)},
@@ -229,23 +238,15 @@ class SubscriptionViewSet(
         pay_status = self.request.query_params.get('pay_status', '').lower()
         user = request.user
 
-        if pay_status == 'true':
-            subscriptions = Subscription.objects.filter(
-                orders__pay_status=True
-            )
-        elif pay_status == 'false':
-            subscriptions = Subscription.objects.filter(
-                orders__pay_status=False
-            )
-        else:
-            subscriptions = Subscription.objects.filter(orders__user=user)
+        orders = SubscriptionUserOrder.objects.filter(
+            user=user
+        ).select_related('subscription', 'tariff')
 
-        subscriptions = subscriptions.annotate(
-            pay_status=F('orders__pay_status'),
-            due_date=F('orders__due_date')
-        )
+        if pay_status in ('true', 'false'):
+            pay_status_bool = pay_status == 'true'
+            orders = orders.filter(pay_status=pay_status_bool)
 
-        serializer = MySubscriptionSerializer(subscriptions, many=True)
+        serializer = MySubscriptionSerializer(orders, many=True)
         return Response(serializer.data)
 
     @extend_schema(
