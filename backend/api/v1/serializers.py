@@ -198,7 +198,7 @@ class MyTariffSerializer(serializers.ModelSerializer):
             'cashback'
         )
 
-    def get_cashback(self, obj):
+    def get_cashback(self, obj) -> int:
         cashback = obj.subscription.cashback
         price_per_period = obj.tariff.price_per_period
         return price_per_period * cashback // 100
