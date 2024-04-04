@@ -76,9 +76,6 @@ class SubscriptionViewSet(
 ):
     """Позволяет просматривать список доступных подписок."""
 
-    # queryset = Subscription.objects.annotate(
-    #     min_price=Min('tariffs__price_per_month')
-    # ).prefetch_related('categories',)
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)

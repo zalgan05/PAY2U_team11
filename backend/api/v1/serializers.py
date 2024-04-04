@@ -78,13 +78,11 @@ class SubscriptionCatalogSerializer(SubscriptionSerializer):
       для пользователя.
     """
 
-    # min_price = serializers.SerializerMethodField()
     min_price = serializers.IntegerField()
     is_favorite = serializers.SerializerMethodField()
     categories = CategorySubscriptionSerializer(many=True)
 
     class Meta(SubscriptionSerializer.Meta):
-        # model = Subscription
         fields = SubscriptionSerializer.Meta.fields + (
             'description',
             'categories',
@@ -92,21 +90,6 @@ class SubscriptionCatalogSerializer(SubscriptionSerializer):
             'min_price',
             'is_favorite'
         )
-        # fields = [
-        #     'id',
-        #     'name',
-        #     'logo',
-        #     'description',
-        #     'categories',
-        #     'cashback',
-        #     'popular_rate',
-        #     'min_price',
-        #     'is_favorite'
-        # ]
-
-    # def get_min_price(self, obj) -> int:
-    #     """Возвращает минимальную цену подписки."""
-    #     return obj.tariffs.first().price_per_month
 
     def get_is_favorite(self, obj) -> bool:
         """Проверяет, добавлен ли сервис в избранное для пользователя."""
@@ -125,34 +108,15 @@ class SubscriptionDetailSerializer(SubscriptionCatalogSerializer):
     - banners (list): Список URL-адресов баннеров (картинок) для подписки.
     """
 
-    # tariffs = TariffSerializer(many=True)
     banners = BannersSubscriptionSerializer(many=True)
 
     class Meta(SubscriptionCatalogSerializer.Meta):
         fields = list(SubscriptionCatalogSerializer.Meta.fields)
         fields.remove('min_price')
         fields += [
-            # 'tariffs',
             'title',
             'banners'
         ]
-
-# class SubscriptionDetailSerializer(serializers.ModelSerializer):
-#     """Сериализатор для детального представления модели Subscription."""
-
-#     tariffs = TariffSerializer(many=True)
-#     category = CategorySubscriptionSerializer(many=True)
-
-#     class Meta:
-#         model = Subscription
-#         fields = [
-#             'id',
-#             'name',
-#             'description',
-#             'category',
-#             'cashback',
-#             'tariffs'
-#         ]
 
 
 class SubscriptionOrderSerializer(serializers.ModelSerializer):
@@ -326,7 +290,6 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
     - due_date (date): Дата окончания подписки пользователя.
     """
 
-    # subscription = SubscriptionSerializer()
     tariff = TariffSerializer()
     id = serializers.IntegerField(source='subscription.id')
     name = serializers.CharField(source='subscription.name')
@@ -336,7 +299,6 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionUserOrder
         fields = (
-            # 'subscription',
             'id',
             'name',
             'logo',
@@ -345,27 +307,6 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
             'pay_status',
             'due_date'
         )
-
-    # tariff = serializers.SerializerMethodField()
-    # pay_status = serializers.BooleanField()
-    # due_date = serializers.DateTimeField()
-
-    # class Meta:
-    #     model = Subscription
-    #     fields = (
-    #         'id',
-    #         'name',
-    #         'logo',
-    #         'cashback',
-    #         'tariff',
-    #         'pay_status',
-    #         'due_date'
-    #     )
-
-    # @extend_schema_field(field=TariffSerializer())
-    # def get_tariff(self, obj) -> dict:
-    #     tariff = obj.orders.select_related('tariff').get().tariff
-    #     return TariffSerializer(tariff).data
 
 
 class SubscriptionForHistorySerializer(serializers.ModelSerializer):
