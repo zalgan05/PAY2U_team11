@@ -61,6 +61,10 @@ class TariffAdmin(admin.ModelAdmin):
         'price',
         'discount'
     )
+    list_filter = (
+        'subscription',
+        'period',
+    )
 
 
 @admin.register(SubscriptionUserOrder)

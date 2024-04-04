@@ -4,16 +4,13 @@ from django.utils import timezone
 from django.db.models import Sum
 from dateutil.relativedelta import relativedelta
 
-from subscriptions.models import Tariff, Transaction, Subscription
+from subscriptions.models import Transaction
 
 
-def bank_operation(context, validated_data, subscription_order):
+def bank_operation(user, subscription, tariff, subscription_order):
     """Симулирует банковскую операцию."""
-    user = context['request'].user
-    sub_id = context['sub_id']
-    tariff_id = validated_data['tariff'].id
-    price = Tariff.objects.get(id=tariff_id).price_per_period
-    cashback = Subscription.objects.get(id=sub_id).cashback
+    price = tariff.price_per_period
+    cashback = subscription.cashback
 
     if user.balance < price:
         raise serializers.ValidationError('Недостаточно средств на счету.')

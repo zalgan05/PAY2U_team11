@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Min, F
+from django.db.models import Min
+from django.db import transaction
 from django.utils import timezone
 
 from dateutil.relativedelta import relativedelta
@@ -17,6 +18,7 @@ from drf_spectacular.utils import (
 from celery.result import AsyncResult
 
 from .services import (
+    bank_operation,
     get_cashback_transactions_period,
     get_transaction_totals,
 )
@@ -32,7 +34,9 @@ from .serializers import (
     HistoryTransactionSerializator,
     InfoTransactionSerializator,
     MySubscriptionSerializer,
+    MyTariffSerializer,
     MyTariffUpdateSerializer,
+    SubscriptionCatalogSerializer,
     SubscriptionSerializer,
     SubscriptionDetailSerializer,
     IsFavoriteSerializer,
@@ -72,9 +76,7 @@ class SubscriptionViewSet(
 ):
     """Позволяет просматривать список доступных подписок."""
 
-    queryset = Subscription.objects.annotate(
-        min_price=Min('tariffs__price_per_month')
-    ).prefetch_related('categories',)
+    queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = SubscriptionFilter
@@ -84,15 +86,22 @@ class SubscriptionViewSet(
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return SubscriptionDetailSerializer
+        elif self.action == 'list':
+            return SubscriptionCatalogSerializer
         return super().get_serializer_class()
 
     def get_queryset(self):
-        if self.action == 'retrieve':
-            return Subscription.objects.prefetch_related(
+        queryset = super().get_queryset()
+        if self.action == 'list':
+            return queryset.annotate(
+                min_price=Min('tariffs__price_per_month')
+            ).prefetch_related('categories',)
+        elif self.action == 'retrieve':
+            return queryset.prefetch_related(
                 'categories',
                 'banners',
             )
-        return super().get_queryset()
+        return queryset
 
     @extend_schema(
         responses={status.HTTP_200_OK: TariffSerializer(many=True)},
@@ -108,7 +117,7 @@ class SubscriptionViewSet(
     @extend_schema(
         tags=['Мои подписки'],
         responses={
-            status.HTTP_200_OK: TariffSerializer,
+            status.HTTP_200_OK: MyTariffSerializer,
             status.HTTP_404_NOT_FOUND: {'error': 'Тариф не найден'}
         },
         summary='Получить мой тариф подписки'
@@ -118,9 +127,12 @@ class SubscriptionViewSet(
         """Получить мой тариф подписки на сервис."""
         user = request.user
         try:
-            subscription = Subscription.objects.get(orders__user=user, id=pk)
-            tariff = subscription.orders.select_related('tariff').get().tariff
-            serializer = TariffSerializer(tariff)
+            subscription = Subscription.objects.get(id=pk)
+            order = SubscriptionUserOrder.objects.select_related('tariff').get(
+                user=user,
+                subscription=subscription
+            )
+            serializer = MyTariffSerializer(order)
             return Response(serializer.data)
         except Exception:
             return Response(
@@ -201,6 +213,50 @@ class SubscriptionViewSet(
 
     @extend_schema(
         tags=['Мои подписки'],
+        request=None,
+        responses={status.HTTP_200_OK: None},
+        summary='Возобновить подписку'
+    )
+    @action(detail=True, methods=['post',])
+    def resume_order(self, request, pk):
+        """Возобновляет подписку уже существовавшую ранее у пользователя."""
+        try:
+            subscription = get_object_or_404(Subscription, id=pk)
+            order = (
+                SubscriptionUserOrder.objects
+                .select_related('subscription')
+                .get(user=request.user, subscription=subscription)
+            )
+            if order.pay_status:
+                print('Yeas')
+                raise ValidationError(
+                    'Подписка уже оплачена и не может быть возобновлена'
+                )
+            with transaction.atomic():
+                order.due_date = (
+                    timezone.now() +
+                    relativedelta(months=(order.tariff.period))
+                )
+                bank_operation(
+                    self.request.user, subscription, order.tariff, order
+                )
+                order.pay_status = True
+            # TEst
+            task = next_bank_transaction.apply_async(
+                args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+            )
+
+            # task = next_bank_transaction.apply_async(
+            #     args=[order.id], eta=order.due_date
+            # )
+            order.task_id_celery = task.id
+            order.save()
+            return Response(status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        tags=['Мои подписки'],
         summary='Получить мои подписки',
         responses={status.HTTP_200_OK: MySubscriptionSerializer(many=True)},
         parameters=[
@@ -229,23 +285,15 @@ class SubscriptionViewSet(
         pay_status = self.request.query_params.get('pay_status', '').lower()
         user = request.user
 
-        if pay_status == 'true':
-            subscriptions = Subscription.objects.filter(
-                orders__pay_status=True
-            )
-        elif pay_status == 'false':
-            subscriptions = Subscription.objects.filter(
-                orders__pay_status=False
-            )
-        else:
-            subscriptions = Subscription.objects.filter(orders__user=user)
+        orders = SubscriptionUserOrder.objects.filter(
+            user=user
+        ).select_related('subscription', 'tariff')
 
-        subscriptions = subscriptions.annotate(
-            pay_status=F('orders__pay_status'),
-            due_date=F('orders__due_date')
-        )
+        if pay_status in ('true', 'false'):
+            pay_status_bool = pay_status == 'true'
+            orders = orders.filter(pay_status=pay_status_bool)
 
-        serializer = MySubscriptionSerializer(subscriptions, many=True)
+        serializer = MySubscriptionSerializer(orders, many=True)
         return Response(serializer.data)
 
     @extend_schema(
@@ -279,6 +327,16 @@ class SubscriptionViewSet(
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        transaction_order = Transaction.objects.get(
+            user=self.request.user,
+            order=order,
+            transaction_type='DEBIT',
+            status='PENDING'
+        )
+        transaction_order.amount = order.tariff.price_per_period
+        transaction_order.save()
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -296,22 +354,34 @@ class SubscriptionViewSet(
                 .select_related('subscription')
                 .get(user=request.user, subscription=subscription)
             )
+            if not order.pay_status:
+                raise ValidationError(
+                    'Подписка уже отменена и не может быть отменена повторно.'
+                )
+            task_id = order.task_id_celery
+            if task_id:
+                AsyncResult(task_id).revoke(terminate=True)
+            Transaction.objects.get(
+                user=self.request.user,
+                order=order,
+                transaction_type='DEBIT',
+                status='PENDING'
+            ).delete()
+            # update_pay_status_and_due_date.apply_async(
+            #     args=[order.id], eta=order.due_date
+            # )
+            # Test
+            update_pay_status_and_due_date.apply_async(
+                args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+            )
+            return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(
                 {'error': 'Подписка у пользователя не найдена.'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        task_id = order.task_id_celery
-        if task_id:
-            AsyncResult(task_id).revoke(terminate=True)
-        # update_pay_status_and_due_date.apply_async(
-        #     args=[order.id], eta=order.due_date
-        # )
-        # Test
-        update_pay_status_and_due_date.apply_async(
-            args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
-        )
-        return Response(status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
 
     # def dispatch(self, request, *args, **kwargs):
     #     res = super().dispatch(request, *args, **kwargs)
