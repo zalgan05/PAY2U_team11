@@ -8,6 +8,7 @@ from drf_spectacular.views import (
 
 from .views import (
     CategorySubscriptionViewSet,
+    HistoryViewSet,
     SubscriptionViewSet
 )
 
@@ -19,6 +20,7 @@ router.register(
     CategorySubscriptionViewSet,
     basename='categories'
 )
+router.register('history', HistoryViewSet, basename='history')
 
 urlpatterns = [
     path('', include(router.urls)),

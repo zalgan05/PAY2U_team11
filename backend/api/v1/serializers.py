@@ -11,17 +11,15 @@ from drf_spectacular.utils import (
 )
 from dateutil.relativedelta import relativedelta
 
-# from .tasks import (
-#     next_bank_transaction,
-#     update_pay_status_and_due_date
-# )
+from .services import bank_operation
 from subscriptions.models import (
     BannersSubscription,
     CategorySubscription,
     Subscription,
     Tariff,
     IsFavoriteSubscription,
-    SubscriptionUserOrder
+    SubscriptionUserOrder,
+    Transaction,
 )
 
 User = get_user_model()
@@ -129,12 +127,16 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         try:
             with transaction.atomic():
-                self.bank_operation(validated_data)
                 tariff = validated_data['tariff']
                 validated_data['due_date'] = (
                     timezone.now() + relativedelta(months=(tariff.period))
                 )
                 subscription_order = super().create(validated_data)
+                bank_operation(
+                    self.context,
+                    validated_data,
+                    subscription_order
+                )
         except IntegrityError:
             raise serializers.ValidationError(
                 'У пользователя уже существует подписка на этот сервис.'
@@ -145,26 +147,6 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
                 'Повторите попытку.'
             )
         return subscription_order
-
-    def bank_operation(self, validated_data):
-        """Симулирует банковскую операцию."""
-        user = self.context['request'].user
-        tariff_id = validated_data['tariff'].id
-        price = Tariff.objects.get(id=tariff_id).price_per_period
-
-        if user.balance < price:
-            raise serializers.ValidationError('Недостаточно средств на счету.')
-
-        try:
-            with transaction.atomic():
-                user.balance -= price
-                user.save(update_fields=['balance'])
-
-        except Exception:
-            raise serializers.ValidationError(
-                'Ошибка при выполнении банковской операции. '
-                'Проверьте данные и повторите попытку.'
-            )
 
     def validate_tariff(self, value):
         """Валидирует выбранный тариф подписки."""
@@ -274,3 +256,43 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
     def get_tariff(self, obj) -> dict:
         tariff = obj.orders.select_related('tariff').get().tariff
         return TariffSerializer(tariff).data
+
+
+class SubscriptionForHistorySerializer(serializers.ModelSerializer):
+    """Сериализатор для подписок в истории транзакций."""
+
+    categories = CategorySubscriptionSerializer(many=True)
+
+    class Meta:
+        model = Subscription
+        fields = ('id', 'name', 'logo', 'categories')
+
+
+class HistoryTransactionSerializator(serializers.ModelSerializer):
+    """Сериализатор для транзакций в истории.."""
+
+    subscription = SubscriptionForHistorySerializer(
+        source='order.subscription'
+    )
+    tariff = serializers.ReadOnlyField(source='order.tariff.slug')
+
+    class Meta:
+        model = Transaction
+        fields = (
+            'id',
+            'subscription',
+            'tariff',
+            'transaction_type',
+            'transaction_date',
+            'amount',
+            'status',
+        )
+
+
+class InfoTransactionSerializator(serializers.Serializer):
+    """Сериализатор для информации о суммах транзакциях."""
+
+    total_next_month = serializers.IntegerField()
+    total_current_month = serializers.IntegerField()
+    total_param = serializers.IntegerField()
+    total_cashback = serializers.IntegerField()

@@ -5,24 +5,32 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Min, F
-# from django.utils import timezone
+from django.utils import timezone
 
-# from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
-    OpenApiParameter
+    OpenApiParameter,
+    OpenApiTypes
 )
 from celery.result import AsyncResult
 
+from .services import (
+    get_cashback_transactions_period,
+    get_transaction_totals,
+)
 from subscriptions.models import (
     CategorySubscription,
     Subscription,
     SubscriptionUserOrder,
     Tariff,
+    Transaction,
 )
 from .serializers import (
     CategorySubscriptionSerializer,
+    HistoryTransactionSerializator,
+    InfoTransactionSerializator,
     MySubscriptionSerializer,
     MyTariffUpdateSerializer,
     SubscriptionSerializer,
@@ -32,6 +40,7 @@ from .serializers import (
     TariffSerializer
 )
 from .filters import (
+    HistoryFilter,
     SubscriptionFilter,
 )
 from .tasks import next_bank_transaction, update_pay_status_and_due_date
@@ -178,12 +187,14 @@ class SubscriptionViewSet(
             user=self.request.user,
             subscription=subscription
         )
-        # task = next_bank_transaction.apply_async(
-        #     args=[order.id], eta=timezone.now() + relativedelta(seconds=30)
-        # )
+        # TEst
         task = next_bank_transaction.apply_async(
-            args=[order.id], eta=order.due_date
+            args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
         )
+
+        # task = next_bank_transaction.apply_async(
+        #     args=[order.id], eta=order.due_date
+        # )
         order.task_id_celery = task.id
         order.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -293,12 +304,13 @@ class SubscriptionViewSet(
         task_id = order.task_id_celery
         if task_id:
             AsyncResult(task_id).revoke(terminate=True)
-        update_pay_status_and_due_date.apply_async(
-            args=[order.id], eta=order.due_date
-        )
         # update_pay_status_and_due_date.apply_async(
-        #     args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+        #     args=[order.id], eta=order.due_date
         # )
+        # Test
+        update_pay_status_and_due_date.apply_async(
+            args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+        )
         return Response(status=status.HTTP_200_OK)
 
     # def dispatch(self, request, *args, **kwargs):
@@ -319,3 +331,106 @@ class CategorySubscriptionViewSet(
 
     queryset = CategorySubscription.objects.all()
     serializer_class = CategorySubscriptionSerializer
+
+
+@extend_schema(tags=['История операций'], summary='Список всех операций')
+class HistoryViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    """Позволяет просматривать истории транзакций."""
+
+    serializer_class = HistoryTransactionSerializator
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = HistoryFilter
+    queryset = Transaction.objects.all()
+
+    def get_queryset(self):
+        qs = Transaction.objects.filter(user=self.request.user)
+        if self.action == 'list':
+            return (
+                qs.select_related('order')
+                .prefetch_related('order__subscription__categories')
+            )
+        return qs
+
+    @extend_schema(
+        tags=['История операций'],
+        summary='Траты за текущий и будущий месяц и по параметрам',
+        responses={status.HTTP_200_OK: InfoTransactionSerializator()},
+        parameters=[
+            OpenApiParameter(
+                name='start_date',
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                description='Дата начала периода (формат: YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='end_date',
+                type=OpenApiTypes.DATE,
+                location=OpenApiParameter.QUERY,
+                description='Дата окончания периода (формат: YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='month',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='Месяц'
+            ),
+            OpenApiParameter(
+                name='year',
+                type=int,
+                location=OpenApiParameter.QUERY,
+                description='Год'
+            ),
+        ]
+    )
+    @action(detail=False, methods=['get'])
+    def info(self, request, *args, **kwargs):
+        """
+        Возвращает информацию о сумме транзакций
+        пользователя за определенный период.
+
+        Возвращает:
+        - total_next_month (int): Общая сумма списаний пользователя
+        за следующий месяц.
+        - total_current_month (int): Общая сумма списаний пользователя
+        за текущий месяц.
+        - total_param (int): Общая сумма списаний пользователя
+        с учетом параметров фильтрации.
+        - total_cashback (int): Сумма транзакций кешбека пользователя
+        с 25 числа прошлого месяца до 25 числа текущего месяца.
+        """
+        queryset_filtered = self.filter_queryset(self.get_queryset()).filter(
+            transaction_type='DEBIT'
+        )
+        queryset = self.get_queryset().filter(transaction_type='DEBIT')
+
+        current_date = timezone.now()
+        next_month_date = current_date + relativedelta(months=1)
+
+        start_date, end_date = get_cashback_transactions_period()
+        queryset_cashback = self.get_queryset().filter(
+            transaction_date__gte=start_date,
+            transaction_date__lte=end_date,
+            transaction_type='DEBIT'
+        )
+
+        totals = get_transaction_totals(
+            queryset_filtered,
+            queryset,
+            queryset_cashback,
+            current_date,
+            next_month_date
+        )
+
+        serializer = InfoTransactionSerializator(totals)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # def dispatch(self, request, *args, **kwargs):
+    #     res = super().dispatch(request, *args, **kwargs)
+    #     from django.db import connection
+    #     print(len(connection.queries))
+    #     for q in connection.queries:
+    #         print('>>>>>>', q['sql'])
+    #     return res
