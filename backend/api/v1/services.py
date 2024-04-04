@@ -4,14 +4,16 @@ from django.utils import timezone
 from django.db.models import Sum
 from dateutil.relativedelta import relativedelta
 
-from subscriptions.models import Tariff, Transaction
+from subscriptions.models import Tariff, Transaction, Subscription
 
 
 def bank_operation(context, validated_data, subscription_order):
     """Симулирует банковскую операцию."""
     user = context['request'].user
+    sub_id = context['sub_id']
     tariff_id = validated_data['tariff'].id
     price = Tariff.objects.get(id=tariff_id).price_per_period
+    cashback = Subscription.objects.get(id=sub_id).cashback
 
     if user.balance < price:
         raise serializers.ValidationError('Недостаточно средств на счету.')
@@ -21,7 +23,7 @@ def bank_operation(context, validated_data, subscription_order):
             user.balance -= price
             user.save(update_fields=['balance'])
 
-            current_transaction(user, subscription_order, price)
+            current_transaction(user, subscription_order, price, cashback)
             future_transaction(user, subscription_order, price)
 
     except Exception:
@@ -31,7 +33,18 @@ def bank_operation(context, validated_data, subscription_order):
         )
 
 
-def current_transaction(user, subscription_order, price):
+def current_transaction(user, subscription_order, price, cashback):
+    """
+    Создает запись о текущей транзакции списания пользователя и
+    создает будущую транзакцию начисления кэшбэка.
+
+    Args:
+        user: Пользователь, выполняющий транзакцию.
+        subscription_order: Заказ подписки,
+        для которого выполняется транзакция.
+        price: Сумма транзакции.
+        cashback: Процент кэшбэка.
+    """
     Transaction.objects.create(
         user=user,
         order=subscription_order,
@@ -40,10 +53,11 @@ def current_transaction(user, subscription_order, price):
         transaction_date=timezone.now(),
         status='PAID'
     )
+    cashback = price * cashback // 100
     Transaction.objects.create(
         user=user,
         order=subscription_order,
-        amount=price,
+        amount=cashback,
         transaction_type='CASHBACK',
         transaction_date=timezone.now(),
         status='PENDING'
@@ -51,6 +65,15 @@ def current_transaction(user, subscription_order, price):
 
 
 def future_transaction(user, subscription_order, price):
+    """
+    Создает запись о будущей транзакции списания пользователя.
+
+    Args:
+        user: Пользователь, выполняющий транзакцию.
+        subscription_order: Заказ подписки,
+        для которого выполняется транзакция.
+        price: Сумма транзакции.
+    """
     Transaction.objects.create(
         user=user,
         order=subscription_order,

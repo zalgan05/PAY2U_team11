@@ -21,6 +21,7 @@ def next_bank_transaction(order_id):
         order = SubscriptionUserOrder.objects.get(id=order_id)
         user = order.user
         price = order.tariff.price_per_period
+        cashback = order.subscription.cashback
         with transaction.atomic():
             user.balance -= price
             user.save(update_fields=['balance'])
@@ -32,7 +33,7 @@ def next_bank_transaction(order_id):
             )
             trans.status = 'PAID'
             trans.save()
-        current_transaction(user, order, price)
+        current_transaction(user, order, price, cashback)
         new_due_date = (
             timezone.now() + relativedelta(months=order.tariff.period)
         )
