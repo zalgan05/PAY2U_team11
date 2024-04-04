@@ -32,6 +32,7 @@ from .serializers import (
     HistoryTransactionSerializator,
     InfoTransactionSerializator,
     MySubscriptionSerializer,
+    MyTariffSerializer,
     MyTariffUpdateSerializer,
     SubscriptionCatalogSerializer,
     SubscriptionSerializer,
@@ -117,7 +118,7 @@ class SubscriptionViewSet(
     @extend_schema(
         tags=['Мои подписки'],
         responses={
-            status.HTTP_200_OK: TariffSerializer,
+            status.HTTP_200_OK: MyTariffSerializer,
             status.HTTP_404_NOT_FOUND: {'error': 'Тариф не найден'}
         },
         summary='Получить мой тариф подписки'
@@ -127,9 +128,12 @@ class SubscriptionViewSet(
         """Получить мой тариф подписки на сервис."""
         user = request.user
         try:
-            subscription = Subscription.objects.get(orders__user=user, id=pk)
-            tariff = subscription.orders.select_related('tariff').get().tariff
-            serializer = TariffSerializer(tariff)
+            subscription = Subscription.objects.get(id=pk)
+            order = SubscriptionUserOrder.objects.select_related('tariff').get(
+                user=user,
+                subscription=subscription
+            )
+            serializer = MyTariffSerializer(order)
             return Response(serializer.data)
         except Exception:
             return Response(

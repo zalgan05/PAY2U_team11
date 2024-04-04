@@ -197,6 +197,46 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
         return value
 
 
+class MyTariffSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для модели SubscriptionUserOrder, представляющий
+    информацию о тарифе подписки.
+
+    Поля:
+    - id (int): Уникальный идентификатор тарифа.
+    - price_per_period (int): Цена за период тарифа.
+    - slug (str): Уникальный идентификатор тарифа.
+    - due_date (date): Дата слеюущего списания средств.
+    - cashback (int): Рассчитанная сумма кэшбэка от стоимости тарифа.
+
+    Методы:
+    - get_cashback: Метод для рассчета суммы кэшбэка на основе
+    цены тарифа и процента кэшбэка.
+    """
+
+    id = serializers.IntegerField(source='tariff.id')
+    price_per_period = serializers.IntegerField(
+        source='tariff.price_per_period'
+    )
+    slug = serializers.SlugField(source='tariff.slug')
+    cashback = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SubscriptionUserOrder
+        fields = (
+            'id',
+            'price_per_period',
+            'slug',
+            'due_date',
+            'cashback'
+        )
+
+    def get_cashback(self, obj):
+        cashback = obj.subscription.cashback
+        price_per_period = obj.tariff.price_per_period
+        return price_per_period * cashback // 100
+
+
 class MyTariffUpdateSerializer(serializers.ModelSerializer):
     """Сериализатор для обновления тарифа подписки пользователя."""
 
