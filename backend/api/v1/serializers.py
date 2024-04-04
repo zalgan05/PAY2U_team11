@@ -164,16 +164,19 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
         read_only_fields = ['due_date',]
 
     def create(self, validated_data):
+        user = self.context['request'].user
+        sub_id = self.context['sub_id']
+        subscription = get_object_or_404(Subscription, id=sub_id)
+        tariff = validated_data['tariff']
+        due_date = timezone.now() + relativedelta(months=(tariff.period))
         try:
             with transaction.atomic():
-                tariff = validated_data['tariff']
-                validated_data['due_date'] = (
-                    timezone.now() + relativedelta(months=(tariff.period))
-                )
+                validated_data['due_date'] = due_date
                 subscription_order = super().create(validated_data)
                 bank_operation(
-                    self.context,
-                    validated_data,
+                    user,
+                    subscription,
+                    tariff,
                     subscription_order
                 )
         except IntegrityError:
