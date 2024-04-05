@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import viewsets, mixins, status, filters
@@ -48,6 +49,9 @@ from .filters import (
     SubscriptionFilter,
 )
 from .tasks import next_bank_transaction, update_pay_status_and_due_date
+
+
+TEST_CELERY = settings.TEST_CELERY
 
 
 @extend_schema(tags=['Сервисы подписок'])
@@ -199,14 +203,14 @@ class SubscriptionViewSet(
             user=self.request.user,
             subscription=subscription
         )
-        # TEst
-        task = next_bank_transaction.apply_async(
-            args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
-        )
-
-        # task = next_bank_transaction.apply_async(
-        #     args=[order.id], eta=order.due_date
-        # )
+        if TEST_CELERY:
+            task = next_bank_transaction.apply_async(
+                args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
+            )
+        else:
+            task = next_bank_transaction.apply_async(
+                args=[order.id], eta=order.due_date
+            )
         order.task_id_celery = task.id
         order.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -241,14 +245,15 @@ class SubscriptionViewSet(
                     self.request.user, subscription, order.tariff, order
                 )
                 order.pay_status = True
-            # TEst
-            task = next_bank_transaction.apply_async(
-                args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
-            )
-
-            # task = next_bank_transaction.apply_async(
-            #     args=[order.id], eta=order.due_date
-            # )
+            if TEST_CELERY:
+                task = next_bank_transaction.apply_async(
+                    args=[order.id],
+                    eta=(timezone.now() + relativedelta(seconds=10))
+                )
+            else:
+                task = next_bank_transaction.apply_async(
+                    args=[order.id], eta=order.due_date
+                )
             order.task_id_celery = task.id
             order.save()
             return Response(status=status.HTTP_200_OK)
@@ -367,13 +372,16 @@ class SubscriptionViewSet(
                 transaction_type='DEBIT',
                 status='PENDING'
             ).delete()
-            # update_pay_status_and_due_date.apply_async(
-            #     args=[order.id], eta=order.due_date
-            # )
-            # Test
-            update_pay_status_and_due_date.apply_async(
-                args=[order.id], eta=timezone.now() + relativedelta(seconds=10)
-            )
+
+            if TEST_CELERY:
+                update_pay_status_and_due_date.apply_async(
+                    args=[order.id],
+                    eta=timezone.now() + relativedelta(seconds=10)
+                )
+            else:
+                update_pay_status_and_due_date.apply_async(
+                    args=[order.id], eta=order.due_date
+                )
             return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(

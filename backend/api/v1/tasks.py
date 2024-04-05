@@ -1,4 +1,5 @@
 from celery import shared_task
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
@@ -12,6 +13,7 @@ from backend.celery import app as celery_app
 
 
 User = get_user_model()
+TEST_CELERY = settings.TEST_CELERY
 
 
 @shared_task
@@ -40,14 +42,14 @@ def next_bank_transaction(order_id):
         order.due_date = new_due_date
         future_transaction(user, order, price)
 
-        # Test
-        task = next_bank_transaction.apply_async(
-            args=[order_id], eta=timezone.now() + relativedelta(seconds=10)
-        )
-
-        # task = next_bank_transaction.apply_async(
-        #     args=[order_id], eta=new_due_date
-        # )
+        if TEST_CELERY:
+            task = next_bank_transaction.apply_async(
+                args=[order_id], eta=timezone.now() + relativedelta(seconds=10)
+            )
+        else:
+            task = next_bank_transaction.apply_async(
+                args=[order_id], eta=new_due_date
+            )
         order.task_id_celery = task.id
         order.save()
 
@@ -88,11 +90,18 @@ def pay_cashback():
     print('<<<<<<<<<<<<ВСЕ КЕШБЕКИ ВЫПЛАЧЕНЫ>>>>>>>>>>>>')
 
 
-# from datetime import timedelta
-celery_app.conf.beat_schedule = {
-    'pay_cashback': {
-        'task': 'api.v1.tasks.pay_cashback',
-        # 'schedule': timedelta(seconds=30),
-        'schedule': crontab(day_of_month=25, hour=0, minute=0),
-    },
-}
+if TEST_CELERY:
+    from datetime import timedelta
+    celery_app.conf.beat_schedule = {
+        'pay_cashback': {
+            'task': 'api.v1.tasks.pay_cashback',
+            'schedule': timedelta(seconds=30),
+        },
+    }
+else:
+    celery_app.conf.beat_schedule = {
+        'pay_cashback': {
+            'task': 'api.v1.tasks.pay_cashback',
+            'schedule': crontab(day_of_month=25, hour=0, minute=0),
+        },
+    }

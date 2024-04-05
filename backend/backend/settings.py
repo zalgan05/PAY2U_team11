@@ -12,10 +12,15 @@ SECRET_KEY = 'django-insecure-4a3#b1o&qv_4v*2dlz%78jvig@l3wv&s!0z@dg*7upit8%zsqv
 
 DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
 
+# Значение True запустит на SQLite, иначе - Postgres
 USE_SQLITE = os.getenv('USE_SQLITE', 'true').lower() == 'true'
 
-# VERSION_API = '1'
+# Версия АПИ
 VERSION_API = os.getenv('VERSION_API', '1')
+
+# Если TEST_CELERY установлено в True, используем задержку в 10 секунд для отладки.
+# В противном случае используем запланированное время выполнения для даты следующего списания.
+TEST_CELERY = True
 
 ALLOWED_HOSTS = []
 
