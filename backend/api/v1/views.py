@@ -181,7 +181,7 @@ class SubscriptionViewSet(
                     'type': 'object',
                     'properties': {
                         'name': {'type': 'string'},
-                        'phone_number': {'type': 'integer'},
+                        'phone_number': {'type': 'string'},
                         'email': {'type': 'string', 'format': 'email'},
                         'tariff': {'type': 'integer'},
                     }
