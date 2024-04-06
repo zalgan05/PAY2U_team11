@@ -165,3 +165,5 @@ migrations/
 media/
 .swagger
 swagger/
+.vscode/
+.vscode
