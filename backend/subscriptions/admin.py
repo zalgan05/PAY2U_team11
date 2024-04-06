@@ -1,12 +1,11 @@
 from django.contrib import admin
-
 from subscriptions.models import (
     BannersSubscription,
     CategorySubscription,
-    Subscription,
-    Tariff,
-    SubscriptionUserOrder,
     IsFavoriteSubscription,
+    Subscription,
+    SubscriptionUserOrder,
+    Tariff,
     Transaction,
 )
 
@@ -14,19 +13,13 @@ from subscriptions.models import (
 class LinkInlines(admin.StackedInline):
     model = Tariff
     extra = 1
-    fields = (
-        'period',
-        'price',
-        'discount'
-    )
+    fields = ('period', 'price', 'discount')
 
 
 class BannersInlines(admin.StackedInline):
     model = BannersSubscription
     extra = 1
-    fields = (
-        'image',
-    )
+    fields = ('image',)
 
 
 @admin.register(Subscription)
@@ -53,14 +46,9 @@ class TariffAdmin(admin.ModelAdmin):
         'price',
         'discount',
         'price_per_period',
-        'slug'
+        'slug',
     )
-    fields = (
-        'subscription',
-        'period',
-        'price',
-        'discount'
-    )
+    fields = ('subscription', 'period', 'price', 'discount')
     list_filter = (
         'subscription',
         'period',
@@ -69,13 +57,7 @@ class TariffAdmin(admin.ModelAdmin):
 
 @admin.register(SubscriptionUserOrder)
 class SubscriptionUserOrderAdmin(admin.ModelAdmin):
-    list_display = (
-        'id',
-        'user',
-        'subscription',
-        'tariff',
-        'pay_status'
-    )
+    list_display = ('id', 'user', 'subscription', 'tariff', 'pay_status')
 
 
 @admin.register(IsFavoriteSubscription)
@@ -103,10 +85,6 @@ class TransactionAdmin(admin.ModelAdmin):
         'transaction_type',
         'transaction_date',
         'amount',
-        'status'
-    )
-    list_filter = (
-        'user',
         'status',
-        'transaction_type'
     )
+    list_filter = ('user', 'status', 'transaction_type')

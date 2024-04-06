@@ -1,21 +1,20 @@
+from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
 from django.db import IntegrityError, transaction
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import serializers
-
-from dateutil.relativedelta import relativedelta
-
-from .services import bank_operation
 from subscriptions.models import (
     BannersSubscription,
     CategorySubscription,
-    Subscription,
-    Tariff,
     IsFavoriteSubscription,
+    Subscription,
     SubscriptionUserOrder,
+    Tariff,
     Transaction,
 )
+
+from .services import bank_operation
 
 User = get_user_model()
 
@@ -88,7 +87,7 @@ class SubscriptionCatalogSerializer(SubscriptionSerializer):
             'categories',
             'popular_rate',
             'min_price',
-            'is_favorite'
+            'is_favorite',
         )
 
     def get_is_favorite(self, obj) -> bool:
@@ -113,10 +112,7 @@ class SubscriptionDetailSerializer(SubscriptionCatalogSerializer):
     class Meta(SubscriptionCatalogSerializer.Meta):
         fields = list(SubscriptionCatalogSerializer.Meta.fields)
         fields.remove('min_price')
-        fields += [
-            'title',
-            'banners'
-        ]
+        fields += ['title', 'banners']
 
 
 class SubscriptionOrderSerializer(serializers.ModelSerializer):
@@ -125,7 +121,9 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionUserOrder
         fields = ['name', 'phone_number', 'email', 'tariff', 'due_date']
-        read_only_fields = ['due_date',]
+        read_only_fields = [
+            'due_date',
+        ]
 
     def create(self, validated_data):
         user = self.context['request'].user
@@ -137,12 +135,7 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 validated_data['due_date'] = due_date
                 subscription_order = super().create(validated_data)
-                bank_operation(
-                    user,
-                    subscription,
-                    tariff,
-                    subscription_order
-                )
+                bank_operation(user, subscription, tariff, subscription_order)
         except IntegrityError:
             raise serializers.ValidationError(
                 'У пользователя уже существует подписка на этот сервис.'
@@ -190,13 +183,7 @@ class MyTariffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubscriptionUserOrder
-        fields = (
-            'id',
-            'price_per_period',
-            'slug',
-            'due_date',
-            'cashback'
-        )
+        fields = ('id', 'price_per_period', 'slug', 'due_date', 'cashback')
 
     def get_cashback(self, obj) -> int:
         cashback = obj.subscription.cashback
@@ -209,7 +196,9 @@ class MyTariffUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubscriptionUserOrder
-        fields = ['tariff',]
+        fields = [
+            'tariff',
+        ]
 
     def update(self, instance, validated_data):
         instance.tariff = validated_data['tariff']
@@ -219,7 +208,8 @@ class MyTariffUpdateSerializer(serializers.ModelSerializer):
     def validate_tariff(self, value):
         if (
             not self.context['subscription']
-            .tariffs.filter(id=value.id).exists()
+            .tariffs.filter(id=value.id)
+            .exists()
         ):
             raise serializers.ValidationError(
                 'Выбранный тариф не принадлежит указанной подписке'
@@ -242,16 +232,14 @@ class IsFavoriteSerializer(serializers.Serializer):
 
         if request.method == 'POST':
             if IsFavoriteSubscription.objects.filter(
-                user=user,
-                subscription=subscription
+                user=user, subscription=subscription
             ).exists():
                 raise serializers.ValidationError(
                     'Вы уже добавили сервис в избранное'
                 )
         elif request.method == 'DELETE':
             if not IsFavoriteSubscription.objects.filter(
-                user=user,
-                subscription=subscription
+                user=user, subscription=subscription
             ).exists():
                 raise serializers.ValidationError(
                     'Вы не добавляли этот сервис в избранное'
@@ -270,8 +258,7 @@ class IsFavoriteSerializer(serializers.Serializer):
         sub_id = self.context.get('sub_id')
         subscription = get_object_or_404(Subscription, id=sub_id)
         IsFavoriteSubscription.objects.create(
-            user=self.context['request'].user,
-            subscription=subscription
+            user=self.context['request'].user, subscription=subscription
         )
 
 
@@ -305,7 +292,7 @@ class MySubscriptionSerializer(serializers.ModelSerializer):
             'cashback',
             'tariff',
             'pay_status',
-            'due_date'
+            'due_date',
         )
 
 

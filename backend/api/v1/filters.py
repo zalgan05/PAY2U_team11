@@ -1,12 +1,11 @@
+from django.db.models import Q
 from django_filters.rest_framework import (
     BooleanFilter,
-    FilterSet,
     CharFilter,
+    DateFilter,
+    FilterSet,
     NumberFilter,
-    DateFilter
 )
-from django.db.models import Q
-
 from subscriptions.models import Subscription, Transaction
 
 
@@ -19,8 +18,8 @@ class CaseInsensitiveStartsWithCharFilter(CharFilter):
     def filter(self, qs, value):
         if value:
             return qs.filter(
-                Q(**{f'{self.field_name}__istartswith': value}) |
-                Q(**{f'{self.field_name}__istartswith': value.capitalize()})
+                Q(**{f'{self.field_name}__istartswith': value})
+                | Q(**{f'{self.field_name}__istartswith': value.capitalize()})
             )
         return qs
 
