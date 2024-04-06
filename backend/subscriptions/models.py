@@ -1,9 +1,9 @@
 import math
-from django.db import models
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
-
+from django.db import models
 
 User = get_user_model()
 
@@ -22,13 +22,9 @@ class BannersSubscription(models.Model):
     """Модель для хранения картинок баннера проекта."""
 
     subscription = models.ForeignKey(
-        'Subscription',
-        on_delete=models.CASCADE,
-        related_name='banners'
+        'Subscription', on_delete=models.CASCADE, related_name='banners'
     )
-    image = models.ImageField(
-        upload_to=subscription_images_path
-    )
+    image = models.ImageField(upload_to=subscription_images_path)
 
 
 class Subscription(models.Model):
@@ -43,7 +39,9 @@ class Subscription(models.Model):
     )
     cashback = models.PositiveIntegerField()
     popular_rate = models.PositiveIntegerField(
-        validators=[MaxValueValidator(MAX_VALUE_POPULAR),]
+        validators=[
+            MaxValueValidator(MAX_VALUE_POPULAR),
+        ]
     )
 
     class Meta:
@@ -79,26 +77,15 @@ class Tariff(models.Model):
     ]
 
     subscription = models.ForeignKey(
-        Subscription,
-        on_delete=models.CASCADE,
-        related_name='tariffs'
+        Subscription, on_delete=models.CASCADE, related_name='tariffs'
     )
     period = models.IntegerField(choices=PERIOD_CHOICES)
     price = models.PositiveIntegerField()
     discount = models.PositiveIntegerField()
-    price_per_month = models.PositiveIntegerField(
-        null=True,
-        blank=True
-    )
-    price_per_period = models.PositiveIntegerField(
-        null=True,
-        blank=True
-    )
+    price_per_month = models.PositiveIntegerField(null=True, blank=True)
+    price_per_period = models.PositiveIntegerField(null=True, blank=True)
     slug = models.SlugField(
-        max_length=MAX_LENGTH,
-        unique=True,
-        null=True,
-        blank=True
+        max_length=MAX_LENGTH, unique=True, null=True, blank=True
     )
 
     def get_slug(self):
@@ -167,16 +154,15 @@ class SubscriptionUserOrder(UserSubscription):
     phone_number = models.CharField(max_length=12)
     email = models.EmailField()
     tariff = models.ForeignKey(
-        Tariff,
-        on_delete=models.CASCADE,
-        related_name='orders'
+        Tariff, on_delete=models.CASCADE, related_name='orders'
     )
     due_date = models.DateTimeField(blank=True, null=True)
     pay_status = models.BooleanField(default=True)
     task_id_celery = models.CharField(
         max_length=MAX_LENGTH,
-        blank=True, null=True,
-        verbose_name='Хранит id запланированной задачи селери'
+        blank=True,
+        null=True,
+        verbose_name='Хранит id запланированной задачи селери',
     )
 
     class Meta:
@@ -233,21 +219,19 @@ class Transaction(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     transaction_type = models.CharField(
-        max_length=MAX_LENGTH,
-        choices=TRANSACTION_TYPES
+        max_length=MAX_LENGTH, choices=TRANSACTION_TYPES
     )
     transaction_date = models.DateTimeField()
     amount = models.IntegerField()
     order = models.ForeignKey(
         SubscriptionUserOrder,
         on_delete=models.CASCADE,
-        null=True, blank=True,
-        related_name='transactions'
+        null=True,
+        blank=True,
+        related_name='transactions',
     )
     status = models.CharField(
-        max_length=MAX_LENGTH,
-        choices=STATUS_TYPES,
-        default='PENDING'
+        max_length=MAX_LENGTH, choices=STATUS_TYPES, default='PENDING'
     )
 
     class Meta:
