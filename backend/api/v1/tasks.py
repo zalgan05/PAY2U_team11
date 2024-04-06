@@ -1,16 +1,16 @@
 from celery import shared_task
+from celery.schedules import crontab
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
-from django.contrib.auth import get_user_model
-from dateutil.relativedelta import relativedelta
-from celery.schedules import crontab
-
-from .services import current_transaction, future_transaction
 from subscriptions.models import SubscriptionUserOrder, Transaction
+
 from backend.celery import app as celery_app
 
+from .services import current_transaction, future_transaction
 
 User = get_user_model()
 TEST_CELERY = settings.TEST_CELERY
@@ -31,13 +31,13 @@ def next_bank_transaction(order_id):
                 user=user,
                 order=order,
                 transaction_type='DEBIT',
-                status='PENDING'
+                status='PENDING',
             )
             trans.status = 'PAID'
             trans.save()
         current_transaction(user, order, price, cashback)
-        new_due_date = (
-            timezone.now() + relativedelta(months=order.tariff.period)
+        new_due_date = timezone.now() + relativedelta(
+            months=order.tariff.period
         )
         order.due_date = new_due_date
         future_transaction(user, order, price)
@@ -71,10 +71,14 @@ def update_pay_status_and_due_date(order_id):
 @shared_task
 def pay_cashback():
     try:
-        transactions = Transaction.objects.filter(
-            transaction_type='CASHBACK',
-            status='PENDING',
-        ).values('user').annotate(total_cashback=Sum('amount'))
+        transactions = (
+            Transaction.objects.filter(
+                transaction_type='CASHBACK',
+                status='PENDING',
+            )
+            .values('user')
+            .annotate(total_cashback=Sum('amount'))
+        )
 
         for transaction_data in transactions:
             user = User.objects.get(id=transaction_data['user'])
@@ -92,6 +96,7 @@ def pay_cashback():
 
 if TEST_CELERY:
     from datetime import timedelta
+
     celery_app.conf.beat_schedule = {
         'pay_cashback': {
             'task': 'api.v1.tasks.pay_cashback',

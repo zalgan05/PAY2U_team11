@@ -7,21 +7,12 @@ MAX_LENGTH = 64
 class User(AbstractUser):
     """Модель пользователя"""
 
-    first_name = models.CharField(
-        max_length=MAX_LENGTH,
-        verbose_name='Имя'
-    )
+    first_name = models.CharField(max_length=MAX_LENGTH, verbose_name='Имя')
     middle_name = models.CharField(
-        max_length=MAX_LENGTH,
-        verbose_name='Отчество'
+        max_length=MAX_LENGTH, verbose_name='Отчество'
     )
-    last_name = models.CharField(
-        max_length=MAX_LENGTH,
-        verbose_name='Фамилия'
-    )
-    balance = models.IntegerField(
-        null=True, blank=True
-    )
+    last_name = models.CharField(max_length=MAX_LENGTH, verbose_name='Фамилия')
+    balance = models.IntegerField(null=True, blank=True)
 
     class Meta:
         verbose_name = 'Пользователь'
