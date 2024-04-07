@@ -21,7 +21,7 @@ VERSION_API = os.getenv('VERSION_API', '1')
 
 # Если TEST_CELERY установлено в True, используем задержку в 10 секунд для отладки.
 # В противном случае используем запланированное время выполнения для даты следующего списания.
-TEST_CELERY = os.getenv('DEBUG', 'False').lower() == 'true'
+TEST_CELERY = os.getenv('TEST_CELERY', 'False').lower() == 'true'
 
 DEFAULT_REDIS_HOST = os.getenv('DEFAULT_REDIS_HOST', 'redis')
 
