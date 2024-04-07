@@ -12,7 +12,9 @@ class User(AbstractUser):
         max_length=MAX_LENGTH, verbose_name='Отчество'
     )
     last_name = models.CharField(max_length=MAX_LENGTH, verbose_name='Фамилия')
-    balance = models.IntegerField(null=True, blank=True)
+    balance = models.IntegerField(
+        null=True, blank=True, verbose_name='Денежный баланс'
+    )
 
     class Meta:
         verbose_name = 'Пользователь'

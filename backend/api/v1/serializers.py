@@ -182,6 +182,9 @@ class MyTariffSerializer(serializers.ModelSerializer):
     """
 
     id = serializers.IntegerField(source='tariff.id')
+    period = serializers.IntegerField(source='tariff.period')
+    discount = serializers.IntegerField(source='tariff.discount')
+    price_per_month = serializers.IntegerField(source='tariff.price_per_month')
     price_per_period = serializers.IntegerField(
         source='tariff.price_per_period'
     )
@@ -190,9 +193,19 @@ class MyTariffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SubscriptionUserOrder
-        fields = ('id', 'price_per_period', 'slug', 'due_date', 'cashback')
+        fields = (
+            'id',
+            'period',
+            'discount',
+            'price_per_month',
+            'price_per_period',
+            'slug',
+            'due_date',
+            'cashback',
+        )
 
     def get_cashback(self, obj) -> int:
+        """Сумма выплачиваемого кешбека."""
         cashback = obj.subscription.cashback
         price_per_period = obj.tariff.price_per_period
         return price_per_period * cashback // 100

@@ -163,7 +163,13 @@ migrations/
 .migrations
 
 media/
+
 .swagger
 swagger/
+swagger
+swagger-api.pdf
+
 .vscode/
 .vscode
+
+docker-compose-production.yml

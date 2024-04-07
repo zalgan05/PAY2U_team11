@@ -22,26 +22,36 @@ class BannersSubscription(models.Model):
     """Модель для хранения картинок баннера проекта."""
 
     subscription = models.ForeignKey(
-        'Subscription', on_delete=models.CASCADE, related_name='banners'
+        'Subscription',
+        on_delete=models.CASCADE,
+        related_name='banners',
+        verbose_name='Сервис подписки',
     )
-    image = models.ImageField(upload_to=subscription_images_path)
+    image = models.ImageField(
+        upload_to=subscription_images_path, verbose_name='Картинка сервиса'
+    )
 
 
 class Subscription(models.Model):
     """Модель сервиса подписки."""
 
-    name = models.CharField(max_length=MAX_LENGTH)
-    title = models.CharField(max_length=MAX_LENGTH)
-    description = models.TextField()
-    logo = models.ImageField(upload_to=subscription_images_path)
-    categories = models.ManyToManyField(
-        'CategorySubscription',
+    name = models.CharField(max_length=MAX_LENGTH, verbose_name='Название')
+    title = models.CharField(
+        max_length=MAX_LENGTH, verbose_name='Краткое описание'
     )
-    cashback = models.PositiveIntegerField()
+    description = models.TextField(verbose_name='Детальное описание')
+    logo = models.ImageField(
+        upload_to=subscription_images_path, verbose_name='Логотип сервиса'
+    )
+    categories = models.ManyToManyField(
+        'CategorySubscription', verbose_name='Категории'
+    )
+    cashback = models.PositiveIntegerField(verbose_name='Процент кешбека')
     popular_rate = models.PositiveIntegerField(
         validators=[
             MaxValueValidator(MAX_VALUE_POPULAR),
-        ]
+        ],
+        verbose_name='Рейтинг популярности',
     )
 
     class Meta:
@@ -55,8 +65,12 @@ class Subscription(models.Model):
 class CategorySubscription(models.Model):
     """Модель категории сервиса подписки."""
 
-    name = models.CharField(max_length=MAX_LENGTH, unique=True)
-    slug = models.SlugField(max_length=MAX_LENGTH, unique=True)
+    name = models.CharField(
+        max_length=MAX_LENGTH, unique=True, verbose_name='Название'
+    )
+    slug = models.SlugField(
+        max_length=MAX_LENGTH, unique=True, verbose_name='Слаг категории'
+    )
 
     class Meta:
         verbose_name = 'Категория сервиса'
@@ -77,15 +91,34 @@ class Tariff(models.Model):
     ]
 
     subscription = models.ForeignKey(
-        Subscription, on_delete=models.CASCADE, related_name='tariffs'
+        Subscription,
+        on_delete=models.CASCADE,
+        related_name='tariffs',
+        verbose_name='Сервис подписки',
     )
-    period = models.IntegerField(choices=PERIOD_CHOICES)
-    price = models.PositiveIntegerField()
-    discount = models.PositiveIntegerField()
-    price_per_month = models.PositiveIntegerField(null=True, blank=True)
-    price_per_period = models.PositiveIntegerField(null=True, blank=True)
+    period = models.IntegerField(
+        choices=PERIOD_CHOICES, verbose_name='Продолжительность подписки'
+    )
+    price = models.PositiveIntegerField(
+        verbose_name='Стоимость за месяц без скидки'
+    )
+    discount = models.PositiveIntegerField(verbose_name='Скидка')
+    price_per_month = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Стоимость за месяц с учетом скидки',
+    )
+    price_per_period = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Стоимость за весь период с учетом скидки',
+    )
     slug = models.SlugField(
-        max_length=MAX_LENGTH, unique=True, null=True, blank=True
+        max_length=MAX_LENGTH,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name='Слаг тарифа',
     )
 
     def get_slug(self):
@@ -135,12 +168,10 @@ class UserSubscription(models.Model):
     """Абстрактная модель связи подписка-пользователь."""
 
     user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
+        User, on_delete=models.CASCADE, verbose_name='Клиент'
     )
     subscription = models.ForeignKey(
-        Subscription,
-        on_delete=models.CASCADE,
+        Subscription, on_delete=models.CASCADE, verbose_name='Сервис подписки'
     )
 
     class Meta:
@@ -150,14 +181,23 @@ class UserSubscription(models.Model):
 class SubscriptionUserOrder(UserSubscription):
     """Модель связи заказа подписка-пользователь."""
 
-    name = models.CharField(max_length=MAX_LENGTH)
-    phone_number = models.CharField(max_length=12)
-    email = models.EmailField()
-    tariff = models.ForeignKey(
-        Tariff, on_delete=models.CASCADE, related_name='orders'
+    name = models.CharField(max_length=MAX_LENGTH, verbose_name='Имя клиента')
+    phone_number = models.CharField(
+        max_length=12, verbose_name='Номер телефона'
     )
-    due_date = models.DateTimeField(blank=True, null=True)
-    pay_status = models.BooleanField(default=True)
+    email = models.EmailField(verbose_name='Почтовый адрес')
+    tariff = models.ForeignKey(
+        Tariff,
+        on_delete=models.CASCADE,
+        related_name='orders',
+        verbose_name='Тариф',
+    )
+    due_date = models.DateTimeField(
+        blank=True, null=True, verbose_name='Дата следующего списания'
+    )
+    pay_status = models.BooleanField(
+        default=True, verbose_name='Статус оплаты'
+    )
     task_id_celery = models.CharField(
         max_length=MAX_LENGTH,
         blank=True,
@@ -217,21 +257,29 @@ class Transaction(models.Model):
         ('PAID', 'Оплачено'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    transaction_type = models.CharField(
-        max_length=MAX_LENGTH, choices=TRANSACTION_TYPES
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name='Клиент'
     )
-    transaction_date = models.DateTimeField()
-    amount = models.IntegerField()
+    transaction_type = models.CharField(
+        max_length=MAX_LENGTH,
+        choices=TRANSACTION_TYPES,
+        verbose_name='Тип транзакции',
+    )
+    transaction_date = models.DateTimeField(verbose_name='Дата транзакции')
+    amount = models.IntegerField(verbose_name='Сумма транзакции')
     order = models.ForeignKey(
         SubscriptionUserOrder,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name='transactions',
+        verbose_name='Подписка на сервис',
     )
     status = models.CharField(
-        max_length=MAX_LENGTH, choices=STATUS_TYPES, default='PENDING'
+        max_length=MAX_LENGTH,
+        choices=STATUS_TYPES,
+        default='PENDING',
+        verbose_name='Статус транзакции',
     )
 
     class Meta:
