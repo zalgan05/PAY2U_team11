@@ -25,7 +25,7 @@ TEST_CELERY = os.getenv('TEST_CELERY', 'False').lower() == 'true'
 
 DEFAULT_REDIS_HOST = os.getenv('DEFAULT_REDIS_HOST', 'redis')
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '93.183.93.2', 'pay2uteam11.ddns.net']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 
 
 INSTALLED_APPS = [
