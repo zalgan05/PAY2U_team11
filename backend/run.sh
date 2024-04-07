@@ -6,8 +6,8 @@ python manage.py migrate;
 echo "Collecting static files..."
 python manage.py collectstatic --noinput;
 
-# echo "Loading initial data..."
-# python manage.py loaddata user_dump.json;
+echo "Loading initial data..."
+python manage.py loaddata users.json;
 # python manage.py update_users;
 # python manage.py loaddata other_dump.json;
 
