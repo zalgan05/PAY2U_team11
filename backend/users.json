@@ -1,0 +1,30 @@
+[
+{
+  "model": "users.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$260000$ExexPNY5Adot5bwbe4IaKC$VSayK5KWjt+7jf70l8V7XZsFpSaG5u9ZY0lWqhHiJ3E=",
+    "last_login": "2024-03-22T15:41:54.705Z",
+    "is_superuser": true,
+    "username": "admin",
+    "email": "a@a.ru",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2024-03-22T15:41:52.298Z",
+    "first_name": "admin",
+    "middle_name": "admin",
+    "last_name": "admin",
+    "balance": 55079,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "authtoken.token",
+  "pk": "127f9c0381fd8142df64abdd2b45b7d1abf4cd9e",
+  "fields": {
+    "user": 1,
+    "created": "2024-03-25T13:44:16.588Z"
+  }
+}
+]

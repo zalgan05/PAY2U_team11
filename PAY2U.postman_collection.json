@@ -1,0 +1,1603 @@
+{
+	"info": {
+		"_postman_id": "8356d0b4-d996-4235-9d51-70408e9d1910",
+		"name": "PAY2U",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "26247627"
+	},
+	"item": [
+		{
+			"name": "Сервисы подписок",
+			"item": [
+				{
+					"name": "Получить все подписки",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								""
+							],
+							"query": [
+								{
+									"key": "is_favorite",
+									"value": "True",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "net",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "серв",
+									"disabled": true
+								},
+								{
+									"key": "categories",
+									"value": "film",
+									"disabled": true
+								},
+								{
+									"key": "categories",
+									"value": "sport",
+									"disabled": true
+								},
+								{
+									"key": "ordering",
+									"value": "name",
+									"disabled": true
+								},
+								{
+									"key": "ordering",
+									"value": "-popular_rate",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Получить все подписки",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										""
+									],
+									"query": [
+										{
+											"key": "is_favorite",
+											"value": "True",
+											"disabled": true
+										},
+										{
+											"key": "name",
+											"value": "net",
+											"disabled": true
+										},
+										{
+											"key": "name",
+											"value": "серв",
+											"disabled": true
+										},
+										{
+											"key": "categories",
+											"value": "film",
+											"disabled": true
+										},
+										{
+											"key": "categories",
+											"value": "sport",
+											"disabled": true
+										},
+										{
+											"key": "ordering",
+											"value": "name",
+											"disabled": true
+										},
+										{
+											"key": "ordering",
+											"value": "-popular_rate",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:40:05 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "GET, HEAD, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1031"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 2,\n        \"name\": \"Сервис 2\",\n        \"logo\": \"http://127.0.0.1:8000/media/1\",\n        \"cashback\": 10,\n        \"description\": \"Детальное описание сервиса 2\",\n        \"categories\": [\n            {\n                \"id\": 3,\n                \"name\": \"Книги\",\n                \"slug\": \"book\"\n            }\n        ],\n        \"popular_rate\": 50,\n        \"min_price\": 380,\n        \"is_favorite\": false\n    },\n    {\n        \"id\": 1,\n        \"name\": \"Сервис 1\",\n        \"logo\": \"http://127.0.0.1:8000/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/favicon.ico\",\n        \"cashback\": 5,\n        \"description\": \"Детальное описание сервиса 1\",\n        \"categories\": [\n            {\n                \"id\": 1,\n                \"name\": \"Кино\",\n                \"slug\": \"film\"\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Музыка\",\n                \"slug\": \"music\"\n            }\n        ],\n        \"popular_rate\": 30,\n        \"min_price\": 250,\n        \"is_favorite\": false\n    },\n    {\n        \"id\": 3,\n        \"name\": \"Netflix\",\n        \"logo\": \"http://127.0.0.1:8000/media/subscriptions/Netflix/images/favicon.ico\",\n        \"cashback\": 5,\n        \"description\": \"Детально описание Netflix\",\n        \"categories\": [\n            {\n                \"id\": 1,\n                \"name\": \"Кино\",\n                \"slug\": \"film\"\n            },\n            {\n                \"id\": 4,\n                \"name\": \"Спорт\",\n                \"slug\": \"sport\"\n            },\n            {\n                \"id\": 5,\n                \"name\": \"Культура\",\n                \"slug\": \"culture\"\n            }\n        ],\n        \"popular_rate\": 90,\n        \"min_price\": 470,\n        \"is_favorite\": false\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Одна подписка",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"1",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Одна подписка",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										""
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:40:22 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "GET, HEAD, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "743"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 1,\n    \"name\": \"Сервис 1\",\n    \"logo\": \"http://127.0.0.1:8000/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/favicon.ico\",\n    \"cashback\": 5,\n    \"description\": \"Детальное описание сервиса 1\",\n    \"categories\": [\n        {\n            \"id\": 1,\n            \"name\": \"Кино\",\n            \"slug\": \"film\"\n        },\n        {\n            \"id\": 2,\n            \"name\": \"Музыка\",\n            \"slug\": \"music\"\n        }\n    ],\n    \"popular_rate\": 30,\n    \"is_favorite\": false,\n    \"title\": \"ТВ, фильмы, сериалы\",\n    \"banners\": [\n        {\n            \"id\": 1,\n            \"image\": \"http://127.0.0.1:8000/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/%D0%A1%D0%BA%D1%83%D1%82%D0%B5%D1%80%D1%8B_x40WpLt.JPG\"\n        },\n        {\n            \"id\": 2,\n            \"image\": \"http://127.0.0.1:8000/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/%D0%BF%D1%80%D0%BE%D0%B4_%D0%BC%D0%B5%D0%BD.png\"\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Тарифы подписки",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/tariffs/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"1",
+								"tariffs",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Тарифы подписки",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/tariffs/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										"tariffs",
+										""
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:43:40 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "GET, HEAD, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "393"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"period\": 1,\n        \"discount\": 0,\n        \"price_per_month\": 300,\n        \"price_per_period\": 300,\n        \"slug\": \"monthly\"\n    },\n    {\n        \"id\": 2,\n        \"period\": 3,\n        \"discount\": 3,\n        \"price_per_month\": 290,\n        \"price_per_period\": 870,\n        \"slug\": \"quarterly\"\n    },\n    {\n        \"id\": 3,\n        \"period\": 6,\n        \"discount\": 7,\n        \"price_per_month\": 280,\n        \"price_per_period\": 1680,\n        \"slug\": \"semiannually\"\n    },\n    {\n        \"id\": 4,\n        \"period\": 12,\n        \"discount\": 17,\n        \"price_per_month\": 250,\n        \"price_per_period\": 3000,\n        \"slug\": \"annually\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Добавить сервис в избранное",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/favorite/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"1",
+								"favorite",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Добавить сервис в избранное",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/favorite/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										"favorite",
+										""
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:43:56 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "POST, DELETE, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Удаление сервиса из избранного",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/favorite/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"1",
+								"favorite",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Удаление сервиса из избранного",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/favorite/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										"favorite",
+										""
+									]
+								}
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:44:01 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "POST, DELETE, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				},
+				{
+					"name": "Подписаться на сервис",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"name\",\r\n  \"phone_number\": \"89777777777\",\r\n  \"email\": \"user@example.com\",\r\n  \"tariff\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/order/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"1",
+								"order",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Подписаться на сервис",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"name\",\r\n  \"phone_number\": \"89777777777\",\r\n  \"email\": \"user@example.com\",\r\n  \"tariff\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/order/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										"order",
+										""
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:44:49 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "POST, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "128"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"name\": \"name\",\n    \"phone_number\": \"89777777777\",\n    \"email\": \"user@example.com\",\n    \"tariff\": 2,\n    \"due_date\": \"2024-07-07T21:44:48.106567+03:00\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Возобновить подписку",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/resume_order/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"1",
+								"resume_order",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Возобновить подписку",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/resume_order/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										"resume_order",
+										""
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:52:52 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "POST, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Мои подписки",
+			"item": [
+				{
+					"name": "Мои подписки",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "value",
+									"value": "Token f197cccab1fc9b4d19e765e63f2b8b92c0c750a7",
+									"type": "string"
+								},
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/my/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"my",
+								""
+							],
+							"query": [
+								{
+									"key": "pay_status",
+									"value": "false",
+									"disabled": true
+								},
+								{
+									"key": "pay_status",
+									"value": "True",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "сервис 1",
+									"disabled": true
+								},
+								{
+									"key": "ordering",
+									"value": "-name",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Мои подписки",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/my/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"my",
+										""
+									],
+									"query": [
+										{
+											"key": "pay_status",
+											"value": "false",
+											"disabled": true
+										},
+										{
+											"key": "pay_status",
+											"value": "True",
+											"disabled": true
+										},
+										{
+											"key": "name",
+											"value": "сервис 1",
+											"disabled": true
+										},
+										{
+											"key": "ordering",
+											"value": "-name",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:47:03 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "GET, HEAD, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "540"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 1,\n        \"name\": \"Сервис 1\",\n        \"logo\": \"/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/favicon.ico\",\n        \"cashback\": 5,\n        \"tariff\": {\n            \"id\": 2,\n            \"period\": 3,\n            \"discount\": 3,\n            \"price_per_month\": 290,\n            \"price_per_period\": 870,\n            \"slug\": \"quarterly\"\n        },\n        \"pay_status\": true,\n        \"due_date\": \"2024-07-07T21:44:48.106567+03:00\"\n    },\n    {\n        \"id\": 2,\n        \"name\": \"Сервис 2\",\n        \"logo\": \"/media/1\",\n        \"cashback\": 10,\n        \"tariff\": {\n            \"id\": 5,\n            \"period\": 1,\n            \"discount\": 0,\n            \"price_per_month\": 400,\n            \"price_per_period\": 400,\n            \"slug\": \"monthly\"\n        },\n        \"pay_status\": true,\n        \"due_date\": \"2024-05-07T21:46:57.231655+03:00\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Мой тариф подписки",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/mytariff/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"1",
+								"mytariff",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Мой тариф подписки",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/mytariff/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										"mytariff",
+										""
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:45:37 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "GET, HEAD, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "156"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"id\": 2,\n    \"period\": 3,\n    \"discount\": 3,\n    \"price_per_month\": 290,\n    \"price_per_period\": 870,\n    \"slug\": \"quarterly\",\n    \"due_date\": \"2024-07-07T21:44:48.106567+03:00\",\n    \"cashback\": 43\n}"
+						}
+					]
+				},
+				{
+					"name": "Изменить тарифф подписки",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"tariff\": 9\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/3/change_tariff/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"3",
+								"change_tariff",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Изменить тарифф подписки",
+							"originalRequest": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"tariff\": 6\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/2/change_tariff/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"2",
+										"change_tariff",
+										""
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:53:38 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "PATCH, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "12"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"tariff\": 6\n}"
+						}
+					]
+				},
+				{
+					"name": "Отменить подписку",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/subscriptions/3/cancel/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"subscriptions",
+								"3",
+								"cancel",
+								""
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Отменить подписку",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/subscriptions/1/cancel/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"subscriptions",
+										"1",
+										"cancel",
+										""
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "plain",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:51:47 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "DELETE, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "0"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": null
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "История операций",
+			"item": [
+				{
+					"name": "Все операции",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/history/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"history",
+										""
+									],
+									"query": [
+										{
+											"key": "month",
+											"value": "4",
+											"disabled": true
+										},
+										{
+											"key": "start_date",
+											"value": "2024-04-04",
+											"disabled": true
+										},
+										{
+											"key": "year",
+											"value": "2023",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:47:21 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "GET, HEAD, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "2081"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": 220,\n        \"subscription\": {\n            \"id\": 1,\n            \"name\": \"Сервис 1\",\n            \"logo\": \"http://127.0.0.1:8000/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/favicon.ico\",\n            \"categories\": [\n                {\n                    \"id\": 1,\n                    \"name\": \"Кино\",\n                    \"slug\": \"film\"\n                },\n                {\n                    \"id\": 2,\n                    \"name\": \"Музыка\",\n                    \"slug\": \"music\"\n                }\n            ]\n        },\n        \"tariff\": \"quarterly\",\n        \"transaction_type\": \"DEBIT\",\n        \"transaction_date\": \"2024-07-07T21:44:48.106567+03:00\",\n        \"amount\": 870,\n        \"status\": \"PENDING\"\n    },\n    {\n        \"id\": 223,\n        \"subscription\": {\n            \"id\": 2,\n            \"name\": \"Сервис 2\",\n            \"logo\": \"http://127.0.0.1:8000/media/1\",\n            \"categories\": [\n                {\n                    \"id\": 3,\n                    \"name\": \"Книги\",\n                    \"slug\": \"book\"\n                }\n            ]\n        },\n        \"tariff\": \"monthly\",\n        \"transaction_type\": \"DEBIT\",\n        \"transaction_date\": \"2024-05-07T21:46:57.231655+03:00\",\n        \"amount\": 400,\n        \"status\": \"PENDING\"\n    },\n    {\n        \"id\": 222,\n        \"subscription\": {\n            \"id\": 2,\n            \"name\": \"Сервис 2\",\n            \"logo\": \"http://127.0.0.1:8000/media/1\",\n            \"categories\": [\n                {\n                    \"id\": 3,\n                    \"name\": \"Книги\",\n                    \"slug\": \"book\"\n                }\n            ]\n        },\n        \"tariff\": \"monthly\",\n        \"transaction_type\": \"CASHBACK\",\n        \"transaction_date\": \"2024-04-07T21:46:57.233667+03:00\",\n        \"amount\": 40,\n        \"status\": \"PENDING\"\n    },\n    {\n        \"id\": 221,\n        \"subscription\": {\n            \"id\": 2,\n            \"name\": \"Сервис 2\",\n            \"logo\": \"http://127.0.0.1:8000/media/1\",\n            \"categories\": [\n                {\n                    \"id\": 3,\n                    \"name\": \"Книги\",\n                    \"slug\": \"book\"\n                }\n            ]\n        },\n        \"tariff\": \"monthly\",\n        \"transaction_type\": \"DEBIT\",\n        \"transaction_date\": \"2024-04-07T21:46:57.232656+03:00\",\n        \"amount\": 400,\n        \"status\": \"PAID\"\n    },\n    {\n        \"id\": 218,\n        \"subscription\": {\n            \"id\": 1,\n            \"name\": \"Сервис 1\",\n            \"logo\": \"http://127.0.0.1:8000/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/favicon.ico\",\n            \"categories\": [\n                {\n                    \"id\": 1,\n                    \"name\": \"Кино\",\n                    \"slug\": \"film\"\n                },\n                {\n                    \"id\": 2,\n                    \"name\": \"Музыка\",\n                    \"slug\": \"music\"\n                }\n            ]\n        },\n        \"tariff\": \"quarterly\",\n        \"transaction_type\": \"DEBIT\",\n        \"transaction_date\": \"2024-04-07T21:44:48.108574+03:00\",\n        \"amount\": 870,\n        \"status\": \"PAID\"\n    },\n    {\n        \"id\": 219,\n        \"subscription\": {\n            \"id\": 1,\n            \"name\": \"Сервис 1\",\n            \"logo\": \"http://127.0.0.1:8000/media/subscriptions/%D0%A1%D0%B5%D1%80%D0%B2%D0%B8%D1%81%201/images/favicon.ico\",\n            \"categories\": [\n                {\n                    \"id\": 1,\n                    \"name\": \"Кино\",\n                    \"slug\": \"film\"\n                },\n                {\n                    \"id\": 2,\n                    \"name\": \"Музыка\",\n                    \"slug\": \"music\"\n                }\n            ]\n        },\n        \"tariff\": \"quarterly\",\n        \"transaction_type\": \"CASHBACK\",\n        \"transaction_date\": \"2024-04-07T21:44:48.108574+03:00\",\n        \"amount\": 43,\n        \"status\": \"PENDING\"\n    }\n]"
+						}
+					]
+				},
+				{
+					"name": "Информация по тратам",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/v1/history/info/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"v1",
+								"history",
+								"info",
+								""
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "3",
+									"disabled": true
+								},
+								{
+									"key": "year",
+									"value": "2024",
+									"disabled": true
+								},
+								{
+									"key": "start_date",
+									"value": "2024-04-04",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "информация по тратам",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/v1/history/info/",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"v1",
+										"history",
+										"info",
+										""
+									],
+									"query": [
+										{
+											"key": "month",
+											"value": "3",
+											"disabled": true
+										},
+										{
+											"key": "year",
+											"value": "2024",
+											"disabled": true
+										},
+										{
+											"key": "start_date",
+											"value": "2024-04-04",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Sun, 07 Apr 2024 18:50:24 GMT"
+								},
+								{
+									"key": "Server",
+									"value": "WSGIServer/0.2 CPython/3.9.10"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Vary",
+									"value": "Accept, origin"
+								},
+								{
+									"key": "Allow",
+									"value": "GET, HEAD, OPTIONS"
+								},
+								{
+									"key": "X-Frame-Options",
+									"value": "DENY"
+								},
+								{
+									"key": "Content-Length",
+									"value": "90"
+								},
+								{
+									"key": "X-Content-Type-Options",
+									"value": "nosniff"
+								},
+								{
+									"key": "Referrer-Policy",
+									"value": "same-origin"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"total_next_month\": 400,\n    \"total_current_month\": 1270,\n    \"total_param\": 2540,\n    \"total_cashback\": 83\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Получение токена",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"admin\",\r\n    \"password\": \"admin\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api-token-auth/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api-token-auth",
+						""
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Получение токена",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"admin\",\r\n    \"password\": \"admin\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api-token-auth/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api-token-auth",
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Date",
+							"value": "Sun, 07 Apr 2024 18:54:14 GMT"
+						},
+						{
+							"key": "Server",
+							"value": "WSGIServer/0.2 CPython/3.9.10"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Allow",
+							"value": "POST, OPTIONS"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "Content-Length",
+							"value": "52"
+						},
+						{
+							"key": "Vary",
+							"value": "origin"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "same-origin"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"token\": \"127f9c0381fd8142df64abdd2b45b7d1abf4cd9e\"\n}"
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "key",
+				"value": "Authorization",
+				"type": "string"
+			},
+			{
+				"key": "value",
+				"value": "Token 127f9c0381fd8142df64abdd2b45b7d1abf4cd9e",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
