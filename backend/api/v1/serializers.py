@@ -1,3 +1,5 @@
+import logging
+
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
@@ -17,6 +19,7 @@ from subscriptions.models import (
 from .services import bank_operation
 
 User = get_user_model()
+client_logger = logging.getLogger('client')
 
 
 class CategorySubscriptionSerializer(serializers.ModelSerializer):
@@ -140,7 +143,11 @@ class SubscriptionOrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 'У пользователя уже существует подписка на этот сервис.'
             )
-        except Exception:
+        except Exception as e:
+            client_logger.error(
+                f'У пользователя {user.id} возникла ошибка {e}'
+                f'при попытке подписаться на {subscription.id}'
+            )
             raise serializers.ValidationError(
                 'Ошибка при выполнении создании подписки. '
                 'Повторите попытку.'

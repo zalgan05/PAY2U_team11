@@ -1,9 +1,14 @@
+import logging
+
 from dateutil.relativedelta import relativedelta
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import serializers
 from subscriptions.models import Transaction
+
+transaction_logger = logging.getLogger('transaction')
+client_logger = logging.getLogger('client')
 
 
 def bank_operation(user, subscription, tariff, subscription_order):
@@ -12,6 +17,13 @@ def bank_operation(user, subscription, tariff, subscription_order):
     cashback = subscription.cashback
 
     if user.balance < price:
+        log_message = (
+            f'У пользователя {user.id} недостаточно средств, чтобы оплатить '
+            f'подписку на сервис {subscription.id} '
+            f'по заказу {subscription_order.id}'
+        )
+        transaction_logger.error(log_message)
+        client_logger.error(log_message)
         raise serializers.ValidationError('Недостаточно средств на счету.')
 
     try:
@@ -19,10 +31,24 @@ def bank_operation(user, subscription, tariff, subscription_order):
             user.balance -= price
             user.save(update_fields=['balance'])
 
+            log_message = (
+                f'Пользователь {user.id} оплатил подписку на сервис '
+                f'{subscription.id} по заказу {subscription_order.id}'
+            )
+            transaction_logger.info(log_message)
+            client_logger.info(log_message)
+
             current_transaction(user, subscription_order, price, cashback)
             future_transaction(user, subscription_order, price)
 
-    except Exception:
+    except Exception as e:
+        log_message = (
+            f'У пользователя {user.id} возникла ошибка {e} '
+            f'при попытке оплатить подписку на сервис {subscription.id} '
+            f'по заказу {subscription_order.id}'
+        )
+        transaction_logger.error(log_message)
+        client_logger.error(log_message)
         raise serializers.ValidationError(
             'Ошибка при выполнении банковской операции. '
             'Проверьте данные и повторите попытку.'

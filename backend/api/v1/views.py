@@ -1,3 +1,5 @@
+import logging
+
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -44,9 +46,10 @@ from .services import (
     get_cashback_transactions_period,
     get_transaction_totals,
 )
-from .tasks import next_bank_transaction, update_pay_status_and_due_date
+from .tasks import cancel_subscription_order, next_bank_transaction
 
 TEST_CELERY = settings.TEST_CELERY
+client_logger = logging.getLogger('client')
 
 
 @extend_schema(tags=['Сервисы подписок'])
@@ -207,6 +210,12 @@ class SubscriptionViewSet(
             )
         order.task_id_celery = task.id
         order.save()
+
+        client_logger.info(
+            f'Клиент {self.request.user.id} оформил подписку'
+            f'на сервис с id {subscription.id} - номер заказа {order.id}'
+        )
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
@@ -229,7 +238,6 @@ class SubscriptionViewSet(
                 'subscription'
             ).get(user=request.user, subscription=subscription)
             if order.pay_status:
-                print('Yeas')
                 raise ValidationError(
                     'Подписка уже оплачена и не может быть возобновлена'
                 )
@@ -252,8 +260,17 @@ class SubscriptionViewSet(
                 )
             order.task_id_celery = task.id
             order.save()
+            client_logger.info(
+                f'Клиент {self.request.user.id} возобновил подписку'
+                f'на сервис с id {subscription.id} - номер заказа {order.id}'
+            )
             return Response(status=status.HTTP_200_OK)
         except ValidationError as e:
+            client_logger.error(
+                f'При попытке возобновить подписку на {subscription.id} '
+                f'у клиента {self.request.user.id} возникла ошибка {e}'
+                f'по номеру заказа {order.id}'
+            )
             return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
@@ -329,6 +346,11 @@ class SubscriptionViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        client_logger.info(
+            f'Клиент {self.request.user.id} изменил тариф у подписки'
+            f'на сервис с id {subscription.id} - номер заказа {order.id}'
+        )
+
         transaction_order = Transaction.objects.get(
             user=self.request.user,
             order=order,
@@ -368,14 +390,18 @@ class SubscriptionViewSet(
             ).delete()
 
             if TEST_CELERY:
-                update_pay_status_and_due_date.apply_async(
+                cancel_subscription_order.apply_async(
                     args=[order.id],
                     eta=timezone.now() + relativedelta(seconds=10),
                 )
             else:
-                update_pay_status_and_due_date.apply_async(
+                cancel_subscription_order.apply_async(
                     args=[order.id], eta=order.due_date
                 )
+            client_logger.info(
+                f'Клиент {self.request.user.id} отменил подписку'
+                f'на сервис с id {subscription.id} - номер заказа {order.id}'
+            )
             return Response(status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(
@@ -383,6 +409,11 @@ class SubscriptionViewSet(
                 status=status.HTTP_404_NOT_FOUND,
             )
         except ValidationError as e:
+            client_logger.error(
+                f'У клиента {self.request.user.id} возникла ошибка {e} при '
+                f'попытке отменить подписку '
+                f'на сервис с id {subscription.id} - номер заказа {order.id}'
+            )
             return Response({'error': e}, status=status.HTTP_400_BAD_REQUEST)
 
     # def dispatch(self, request, *args, **kwargs):
