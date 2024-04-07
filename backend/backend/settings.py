@@ -1,6 +1,7 @@
 # flake8: noqa
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -167,3 +168,57 @@ CELERY_RESULT_BACKEND = f'redis://{DEFAULT_REDIS_HOST}:6379/0'
 # CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Настройки логирования
+LOGGING_DIR = os.path.join(BASE_DIR, 'logs')
+
+if not os.path.exists(LOGGING_DIR):
+    os.makedirs(LOGGING_DIR)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        }
+    },
+    'handlers': {
+        'celery': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'celery.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        },
+        'client': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'client.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+        },
+        'transaction': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'transaction.log'),
+            'formatter': 'verbose',
+            'encoding': 'utf-8'
+        },
+    },
+    'loggers': {
+        'celery': {
+            'handlers': ['celery'],
+            'level': 'INFO',
+        },
+        'client': {
+            'handlers': ['client'],
+            'level': 'INFO',
+        },
+        'transaction': {
+            'handlers': ['transaction'],
+            'level': 'INFO',
+        },
+    },
+}

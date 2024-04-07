@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from celery.schedules import crontab
 from dateutil.relativedelta import relativedelta
@@ -14,12 +16,16 @@ from .services import current_transaction, future_transaction
 
 User = get_user_model()
 TEST_CELERY = settings.TEST_CELERY
+celery_logger = logging.getLogger('celery')
 
 
 @shared_task
 def next_bank_transaction(order_id):
     """Задача для обработки следующей банковской транзакции."""
     try:
+        celery_logger.info(
+            f'Начало выполнения транзакции списания по заказу {order_id}'
+        )
         order = SubscriptionUserOrder.objects.get(id=order_id)
         user = order.user
         price = order.tariff.price_per_period
@@ -52,25 +58,49 @@ def next_bank_transaction(order_id):
             )
         order.task_id_celery = task.id
         order.save()
+        celery_logger.info(
+            f'Успешная транзакции списания по заказу {order_id}'
+        )
 
     except Exception as e:
-        print(e)
+        celery_logger.error(
+            f'Ошибка при попытке списания по заказу {order_id}: {e}'
+        )
         order.pay_status = False
         order.save()
 
 
 @shared_task
-def update_pay_status_and_due_date(order_id):
-    """Задача для обновления статуса оплаты и даты следующего списания."""
-    order = SubscriptionUserOrder.objects.get(id=order_id)
-    order.pay_status = False
-    order.due_date = None
-    order.save()
+def cancel_subscription_order(order_id):
+    """
+    Обновляет статус оплаты
+    и дату следующего списания при отмене подписки
+    """
+    try:
+        celery_logger.info(
+            f'Начало выполнения обновления статуса оплаты и '
+            f'даты следующего списания по заказу {order_id} после отмены'
+        )
+        order = SubscriptionUserOrder.objects.get(id=order_id)
+        order.pay_status = False
+        order.due_date = None
+        order.save()
+        celery_logger.info(
+            f'Успешное выполнение обновления статуса оплаты и '
+            f'даты следующего списания по заказу {order_id} после отмены'
+        )
+    except Exception as e:
+        celery_logger.error(
+            f'Ошибка при отмене обновления статуса оплаты и '
+            f'даты следующего списания по заказу {order_id}: {e}'
+        )
 
 
 @shared_task
 def pay_cashback():
+    """Выполняет выплату кешбека пользователям."""
     try:
+        celery_logger.info(f'Начало выплат кешбека {timezone.now}')
         transactions = (
             Transaction.objects.filter(
                 transaction_type='CASHBACK',
@@ -88,10 +118,9 @@ def pay_cashback():
                 user.balance += cashback_amount
                 user.save(update_fields=['balance'])
                 transactions.filter(user=user).update(status='CREDITED')
+        celery_logger.info(f'Весь кешбек успешно выплачен {timezone.now}')
     except Exception as e:
-        print(e)
-
-    print('<<<<<<<<<<<<ВСЕ КЕШБЕКИ ВЫПЛАЧЕНЫ>>>>>>>>>>>>')
+        celery_logger.info(f'При выплате кешбека произошла ошибка: {e}')
 
 
 if TEST_CELERY:
