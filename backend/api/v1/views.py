@@ -511,7 +511,7 @@ class HistoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         queryset_cashback = self.get_queryset().filter(
             transaction_date__gte=start_date,
             transaction_date__lte=end_date,
-            transaction_type='DEBIT',
+            transaction_type='CASHBACK',
         )
 
         totals = get_transaction_totals(

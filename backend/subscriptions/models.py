@@ -115,7 +115,6 @@ class Tariff(models.Model):
     )
     slug = models.SlugField(
         max_length=MAX_LENGTH,
-        unique=True,
         null=True,
         blank=True,
         verbose_name='Слаг тарифа',
